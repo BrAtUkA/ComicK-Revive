@@ -1,0 +1,65 @@
+{
+  "manifest_version": 3,
+  "name": "ComicK Revive",
+  "version": "0.1.0",
+  "version_name": "0.1.0-beta",
+  "description": "Read manga directly on ComicK from various sources",
+  "icons": {
+    "16": "assets/icons/icon-16.png",
+    "48": "assets/icons/icon-48.png",
+    "128": "assets/icons/icon-128.png"
+  },
+  "permissions": [
+    "storage",
+    "activeTab",
+    "unlimitedStorage",
+    "declarativeNetRequest",
+    "declarativeNetRequestFeedback",
+    "webRequest"
+  ],
+  "declarative_net_request": {
+    "rule_resources": [
+      {
+        "id": "mangadex_origin",
+        "enabled": true,
+        "path": "rules/mangadex.json"
+      },
+      {
+        "id": "asura_origin",
+        "enabled": true,
+        "path": "rules/asura.json"
+      }
+    ]
+  },
+  "host_permissions": [
+    "https://comick.dev/*",
+    "https://asurascans.com/*",
+    "https://api.asurascans.com/*",
+    "https://cdn.asurascans.com/*",
+    "https://mangakatana.com/*",
+    "https://*.mangakatana.com/*",
+    "https://api.mangadex.org/*",
+    "https://uploads.mangadex.org/*",
+    "https://*.mangadex.network/*"
+  ],
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://comick.dev/*"
+      ],
+      "js": ["content.js"],
+      "css": ["content.css"],
+      "run_at": "document_idle"
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": ["viewer.js", "chunks/*", "assets/*"],
+      "matches": ["https://comick.dev/*"]
+    }
+  ]
+}

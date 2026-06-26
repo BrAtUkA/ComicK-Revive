@@ -1,0 +1,159 @@
+.cr-toast {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  padding: 10px 14px;
+  font-size: 13px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  color: #ccc;
+  background: #1a1a1a;
+  border: 1px solid #333;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  z-index: 9999999;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  animation: cr-toast-in 0.25s ease, cr-toast-out 0.3s ease forwards;
+  animation-delay: 0s, 3.5s;
+}
+
+.cr-toast-icon {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 1px solid #555;
+  color: #888;
+  font-size: 11px;
+  font-style: italic;
+  font-family: Georgia, serif;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.cr-toast-icon-clickable {
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s;
+}
+
+.cr-toast-icon-clickable:hover {
+  border-color: #888;
+  color: #bbb;
+}
+
+.cr-toast-body {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  flex: 1;
+}
+
+.cr-toast-dismiss {
+  color: #666;
+  font-size: 10px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: color 0.15s;
+}
+
+.cr-toast-dismiss:hover {
+  color: #999;
+}
+
+.cr-toast-close {
+  color: #555;
+  font-size: 16px;
+  cursor: pointer;
+  line-height: 1;
+  flex-shrink: 0;
+  transition: color 0.15s;
+  padding: 0 2px;
+}
+
+.cr-toast-close:hover {
+  color: #aaa;
+}
+
+/* Detail popup (positioned above toast with V-nip) */
+.cr-toast-detail {
+  position: fixed;
+  padding: 10px 14px;
+  font-size: 12px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  color: #bbb;
+  background: #222;
+  border: 1px solid #444;
+  border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
+  z-index: 10000000;
+  max-width: 320px;
+  min-width: 160px;
+  animation: cr-toast-detail-in 0.15s ease;
+  --nip-left: 50%;
+}
+
+/* V-shaped nip pointing down */
+.cr-toast-detail::after {
+  content: '';
+  position: absolute;
+  bottom: -7px;
+  left: var(--nip-left);
+  transform: translateX(-50%);
+  width: 0;
+  height: 0;
+  border-left: 7px solid transparent;
+  border-right: 7px solid transparent;
+  border-top: 7px solid #444;
+}
+
+.cr-toast-detail::before {
+  content: '';
+  position: absolute;
+  bottom: -6px;
+  left: var(--nip-left);
+  transform: translateX(-50%);
+  width: 0;
+  height: 0;
+  border-left: 6px solid transparent;
+  border-right: 6px solid transparent;
+  border-top: 6px solid #222;
+  z-index: 1;
+}
+
+.cr-toast-detail-manga {
+  color: #ddd;
+  font-weight: 600;
+  font-size: 12px;
+  text-transform: capitalize;
+  margin-top: 6px;
+  padding-bottom: 2px;
+}
+
+.cr-toast-detail-manga:first-child {
+  margin-top: 0;
+}
+
+.cr-toast-detail-chapter {
+  color: #999;
+  font-size: 11px;
+  padding-left: 8px;
+  line-height: 1.6;
+}
+
+@keyframes cr-toast-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes cr-toast-out {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+@keyframes cr-toast-detail-in {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}

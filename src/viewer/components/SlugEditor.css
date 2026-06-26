@@ -1,0 +1,307 @@
+/* ─── Slug Editor Dialog ───────────────────────────────────────────────── */
+
+.cr-slug-editor-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding-top: 10vh;
+  z-index: 1000010;
+  backdrop-filter: blur(2px);
+  animation: cr-slug-editor-fade-in 0.15s ease;
+}
+
+@keyframes cr-slug-editor-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.cr-slug-editor-modal {
+  background-color: #222;
+  border: 1px solid #444;
+  border-radius: 12px;
+  width: 90%;
+  max-width: 560px;
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
+  animation: cr-slug-editor-in 0.2s ease;
+}
+
+@keyframes cr-slug-editor-in {
+  from {
+    opacity: 0;
+    transform: translateY(-12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ─── Header ──────────────────────────────────────────────────────────── */
+
+.cr-slug-editor-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px 12px;
+  border-bottom: 1px solid #333;
+  flex-shrink: 0;
+}
+
+.cr-slug-editor-header h4 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: #fff;
+}
+
+.cr-slug-editor-source-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #a5b4fc;
+  background: rgba(99, 102, 241, 0.12);
+  border: 1px solid rgba(99, 102, 241, 0.25);
+  border-radius: 12px;
+  letter-spacing: 0.3px;
+  white-space: nowrap;
+}
+
+/* ─── Body ────────────────────────────────────────────────────────────── */
+
+.cr-slug-editor-body {
+  padding: 16px 20px;
+  flex-shrink: 0;
+}
+
+.cr-slug-editor-input-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.cr-slug-editor-input-row .cr-setting-input {
+  flex: 1;
+  min-width: 0;
+}
+
+.cr-slug-editor-check-btn {
+  padding: 8px 16px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #ccc;
+  background-color: #333;
+  border: 1px solid #444;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.cr-slug-editor-check-btn:hover:not(:disabled) {
+  background-color: #444;
+  color: #fff;
+}
+
+.cr-slug-editor-check-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.cr-slug-editor-hint {
+  display: block;
+  margin-top: 6px;
+  font-size: 11px;
+  color: #555;
+}
+
+/* ─── Result Area ─────────────────────────────────────────────────────── */
+
+.cr-slug-editor-result {
+  min-height: 0;
+  overflow-y: auto;
+  border-top: 1px solid #333;
+  scrollbar-width: thin;
+  scrollbar-color: #444 transparent;
+}
+
+.cr-slug-editor-result::-webkit-scrollbar {
+  width: 6px;
+}
+
+.cr-slug-editor-result::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.cr-slug-editor-result::-webkit-scrollbar-thumb {
+  background: #444;
+  border-radius: 3px;
+}
+
+.cr-slug-editor-result::-webkit-scrollbar-thumb:hover {
+  background: #666;
+}
+
+.cr-slug-editor-result:empty {
+  display: none;
+}
+
+/* Sleek scrollbars for nested scrollable areas (description, chapter list) */
+.cr-slug-editor-modal * {
+  scrollbar-width: thin;
+  scrollbar-color: #444 transparent;
+}
+
+.cr-slug-editor-modal *::-webkit-scrollbar {
+  width: 6px;
+}
+
+.cr-slug-editor-modal *::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.cr-slug-editor-modal *::-webkit-scrollbar-thumb {
+  background: #444;
+  border-radius: 3px;
+}
+
+.cr-slug-editor-modal *::-webkit-scrollbar-thumb:hover {
+  background: #666;
+}
+
+/* Details view inside result (reuses .cr-details-* from SourceMatchModal.css) */
+.cr-slug-editor-details {
+  padding: 20px;
+}
+
+.cr-slug-editor-details .cr-details-meta {
+  margin-bottom: 16px;
+}
+
+.cr-slug-editor-details .cr-details-cover {
+  width: 100px;
+  height: 142px;
+}
+
+.cr-slug-editor-details .cr-details-chapters-header {
+  margin-top: 8px;
+}
+
+/* Slug display under the title */
+.cr-slug-editor-details-slug {
+  font-family: 'SF Mono', 'Consolas', 'Monaco', monospace;
+  font-size: 11px;
+  color: #818cf8;
+  margin-top: 2px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Loading state */
+.cr-slug-editor-loading {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 24px 20px;
+  justify-content: center;
+  color: #888;
+  font-size: 13px;
+}
+
+.cr-slug-editor-spinner {
+  width: 18px;
+  height: 18px;
+  border: 2px solid #444;
+  border-top-color: #6366f1;
+  border-radius: 50%;
+  animation: cr-slug-editor-spin 0.6s linear infinite;
+}
+
+@keyframes cr-slug-editor-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Error state */
+.cr-slug-editor-error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 32px 20px;
+  text-align: center;
+  color: #f87171;
+}
+
+.cr-slug-editor-error svg {
+  width: 36px;
+  height: 36px;
+  opacity: 0.7;
+}
+
+.cr-slug-editor-error span {
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+/* ─── Footer ──────────────────────────────────────────────────────────── */
+
+.cr-slug-editor-footer {
+  display: flex;
+  gap: 12px;
+  padding: 12px 20px 16px;
+  border-top: 1px solid #333;
+  flex-shrink: 0;
+}
+
+.cr-slug-editor-cancel {
+  flex: 1;
+  padding: 10px 16px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #ccc;
+  background-color: #333;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.cr-slug-editor-cancel:hover {
+  background-color: #444;
+  color: #fff;
+}
+
+.cr-slug-editor-apply {
+  flex: 1;
+  padding: 10px 16px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #fff;
+  background: #6366f1;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.cr-slug-editor-apply:hover:not(:disabled) {
+  background: #5558e3;
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+}
+
+.cr-slug-editor-apply:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}

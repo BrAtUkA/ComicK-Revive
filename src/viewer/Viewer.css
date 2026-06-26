@@ -1,0 +1,818 @@
+/* ComicK Revive - Viewer Styles */
+
+/* Import modal styles */
+@import './components/SourceMatchModal.css';
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   VIEWER CONTAINER
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.cr-viewer {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 999999;
+  display: flex;
+  flex-direction: column;
+  background-color: #0a0a0a;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+}
+
+/* Disable browser's native scroll anchoring - we handle this ourselves */
+.cr-viewer-content {
+  overflow-anchor: none;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   TOOLBAR
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.cr-viewer-toolbar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 20px;
+  background-color: rgba(17, 17, 17, 0.95);
+  border-bottom: 1px solid #222;
+  backdrop-filter: blur(10px);
+  transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 101;
+  flex-shrink: 0;
+}
+
+.cr-viewer-toolbar.hidden {
+  transform: translateY(-100%);
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Toolbar hide button */
+.cr-toolbar-hide-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  color: #555;
+  transition: all 0.2s ease;
+  margin-left: 8px;
+  padding: 0;
+}
+
+.cr-toolbar-hide-btn:hover {
+  background-color: #222;
+  color: #888;
+}
+
+.cr-toolbar-hide-btn svg {
+  width: 16px;
+  height: 16px;
+}
+
+/* Toolbar show button - appears when toolbar hidden */
+.cr-toolbar-show-btn {
+  position: fixed;
+  top: 0;
+  right: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 20px;
+  background-color: rgba(30, 30, 30, 0.5);
+  border: none;
+  border-radius: 0 0 6px 6px;
+  cursor: pointer;
+  color: #555;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 101;
+  padding: 0;
+  opacity: 0;
+  transform: translateY(-100%);
+  pointer-events: none;
+}
+
+.cr-toolbar-show-btn:hover {
+  background-color: rgba(50, 50, 50, 0.85);
+  color: #999;
+  height: 24px;
+}
+
+.cr-toolbar-show-btn.visible {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+.cr-toolbar-show-btn svg {
+  width: 14px;
+  height: 14px;
+}
+
+.cr-toolbar-left,
+.cr-toolbar-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.cr-toolbar-left {
+  flex: 1;
+  min-width: 0; /* Allow shrinking */
+}
+
+.cr-toolbar-right {
+  flex-shrink: 0;
+  justify-content: flex-end;
+}
+
+.cr-manga-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #fff;
+  max-width: 300px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex-shrink: 1;
+  min-width: 0;
+  cursor: pointer;
+  padding: 4px 8px;
+  margin: -4px -8px;
+  border-radius: 4px;
+  transition: background-color 0.15s ease;
+}
+
+.cr-manga-title:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.cr-page-progress {
+  font-size: 13px;
+  font-weight: 500;
+  color: #aaa;
+  padding: 6px 12px;
+  background-color: rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+  white-space: nowrap;
+}
+
+/* Zoom Controls */
+.cr-zoom-control {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  background-color: rgba(255, 255, 255, 0.05);
+  border-radius: 6px;
+  padding: 2px;
+}
+
+.cr-zoom-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  background: transparent;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  color: #666;
+  font-size: 16px;
+  font-weight: 500;
+  transition: all 0.15s ease;
+}
+
+.cr-zoom-btn:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+  color: #aaa;
+}
+
+.cr-zoom-value {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 48px;
+  height: 28px;
+  background: transparent;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  color: #888;
+  font-size: 12px;
+  font-weight: 500;
+  padding: 0 6px;
+  transition: all 0.15s ease;
+}
+
+.cr-zoom-value:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+  color: #aaa;
+}
+
+/* Toolbar buttons */
+.cr-toolbar-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  background: transparent;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  color: #888;
+  transition: all 0.2s ease;
+}
+
+.cr-toolbar-btn:hover {
+  background-color: #222;
+  color: #fff;
+}
+
+.cr-toolbar-btn.cr-close-btn:hover {
+  background-color: #dc2626;
+  color: #fff;
+}
+
+/* Button group */
+.cr-toolbar-btn-group {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  background-color: rgba(255, 255, 255, 0.05);
+  border-radius: 10px;
+  padding: 4px;
+}
+
+.cr-toolbar-btn-group .cr-toolbar-btn {
+  width: 36px;
+  height: 36px;
+}
+
+.cr-toolbar-divider {
+  width: 1px;
+  height: 24px;
+  background-color: rgba(255, 255, 255, 0.1);
+  margin: 0 4px;
+}
+
+/* Chapter button */
+.cr-chapter-btn {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 20px;
+  font-size: 15px;
+  font-weight: 500;
+  color: #fff;
+  background-color: #222;
+  border: 1px solid #333;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-width: 140px;
+  max-width: 400px;
+  height: 44px;
+}
+
+.cr-chapter-btn:hover {
+  border-color: #6366f1;
+  background-color: #2a2a2a;
+}
+
+.cr-chapter-btn-text {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  overflow: hidden;
+  flex: 1;
+}
+
+.cr-chapter-btn-label {
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.cr-chapter-btn-title {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: #888;
+  font-weight: 400;
+  min-width: 0;
+}
+
+.cr-chapter-btn-title:not(:empty)::before {
+  content: "–";
+  margin-right: 8px;
+  color: #555;
+}
+
+.cr-chapter-btn svg {
+  color: #888;
+  flex-shrink: 0;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   CONTENT AREA
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.cr-viewer-content {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background-color: #0a0a0a;
+  padding-top: 69px; /* Height of toolbar — always present to prevent content shift */
+  scrollbar-width: none; /* Firefox: hide native scrollbar — custom overlay replaces it */
+}
+
+.cr-viewer-content::-webkit-scrollbar {
+  display: none; /* Chromium: hide native scrollbar — custom overlay replaces it */
+}
+
+/* Vertical mode — keep padding-top for toolbar */
+.cr-viewer-content.cr-mode-vertical {
+  padding: 0;
+  padding-top: 69px;
+}
+
+.cr-viewer-content.cr-mode-vertical .cr-page-wrapper {
+  width: 100%;
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+/* Single mode */
+.cr-viewer-content.cr-mode-single {
+  justify-content: center;
+  padding: 20px;
+}
+
+.cr-viewer-content.cr-mode-single .cr-page-wrapper {
+  max-height: 100%;
+  max-width: 100%;
+}
+
+/* Double mode */
+.cr-viewer-content.cr-mode-double {
+  flex-direction: row;
+  justify-content: center;
+  padding: 20px;
+  gap: 4px;
+}
+
+/* Page wrapper */
+.cr-page-wrapper {
+  position: relative;
+  background-color: #111;
+  line-height: 0;
+}
+
+.cr-page-wrapper.cr-vertical-page {
+  margin-bottom: 0;
+}
+
+.cr-page-img {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+/* Page placeholder */
+.cr-page-placeholder {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #1a1a1a 0%, #111 100%);
+  line-height: normal;
+}
+
+.cr-page-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  color: #444;
+}
+
+.cr-page-loading span {
+  font-size: 14px;
+}
+
+/* Page error */
+.cr-page-error {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 20px;
+  color: #dc2626;
+  background: linear-gradient(135deg, #1a1a1a 0%, #111 100%);
+  line-height: normal;
+}
+
+.cr-page-error span {
+  font-size: 14px;
+}
+
+.cr-retry-page {
+  padding: 8px 16px;
+  font-size: 12px;
+  color: #fff;
+  background-color: #333;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.cr-retry-page:hover {
+  background-color: #444;
+}
+
+/* Loaded state */
+.cr-page-wrapper.cr-loaded {
+  background-color: transparent;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   FOOTER
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.cr-viewer-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 20px;
+  background-color: rgba(17, 17, 17, 0.95);
+  border-top: 1px solid #222;
+  backdrop-filter: blur(10px);
+  transition: transform 0.3s ease, opacity 0.3s ease;
+  z-index: 10;
+}
+
+.cr-viewer-footer.hidden {
+  transform: translateY(100%);
+  opacity: 0;
+  pointer-events: none;
+}
+
+.cr-nav-btn {
+  padding: 10px 20px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #fff;
+  background-color: #222;
+  border: 1px solid #333;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.cr-nav-btn:hover {
+  background-color: #333;
+  border-color: #444;
+}
+
+.cr-nav-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.cr-progress {
+  font-size: 14px;
+  color: #888;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   SOURCE SEARCH
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.cr-source-search {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  padding: 40px;
+  max-width: 600px;
+  width: 100%;
+}
+
+.cr-source-search h3 {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 600;
+  color: #fff;
+}
+
+.cr-source-search p {
+  margin: 0;
+  color: #888;
+}
+
+.cr-search-form {
+  display: flex;
+  gap: 12px;
+  width: 100%;
+}
+
+.cr-search-input {
+  flex: 1;
+  padding: 12px 16px;
+  font-size: 16px;
+  color: #fff;
+  background-color: #1a1a1a;
+  border: 1px solid #333;
+  border-radius: 8px;
+}
+
+.cr-search-input:focus {
+  outline: none;
+  border-color: #6366f1;
+}
+
+.cr-search-btn {
+  padding: 12px 24px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #fff;
+  background-color: #6366f1;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+}
+
+.cr-search-btn:hover {
+  background-color: #5558e3;
+  transform: translateY(-1px);
+}
+
+.cr-placeholder {
+  padding: 20px;
+  text-align: center;
+  color: #666;
+  font-style: italic;
+}
+
+/* Search result item */
+.cr-search-result {
+  display: flex;
+  gap: 16px;
+  padding: 16px;
+  background-color: #1a1a1a;
+  border: 1px solid #333;
+  border-radius: 8px;
+  margin-bottom: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.cr-search-result:hover {
+  border-color: #6366f1;
+  background-color: #222;
+}
+
+.cr-search-result img {
+  width: 60px;
+  height: 80px;
+  object-fit: cover;
+  border-radius: 4px;
+}
+
+.cr-search-result-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.cr-search-result-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #fff;
+}
+
+.cr-search-result-source {
+  font-size: 12px;
+  color: #888;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   SCROLLBAR (custom overlay — replaces native in all modes)
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* Custom scrollbar overlay — positioned over content, never shifts layout */
+.cr-custom-scrollbar {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 10px;
+  height: 100%;
+  z-index: 100;
+  opacity: 0;
+  transition: opacity 0.35s ease;
+  pointer-events: none;
+}
+
+.cr-custom-scrollbar.cr-scrollbar-visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* Always-visible mode (autohide disabled) — no opacity transitions */
+.cr-custom-scrollbar.cr-scrollbar-always-visible {
+  opacity: 1;
+  pointer-events: auto;
+  transition: none;
+}
+
+/* Invisible hover trigger zone — wider than visible scrollbar for easy targeting */
+.cr-custom-scrollbar-trigger {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 40px;
+  height: 100%;
+  z-index: 99;
+  pointer-events: auto;
+}
+
+.cr-custom-scrollbar-track {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 10px;
+  height: 100%;
+  background: transparent;
+}
+
+.cr-custom-scrollbar-thumb {
+  position: absolute;
+  right: 1px;
+  width: 8px;
+  min-height: 30px;
+  background: rgba(255, 255, 255, 0.25);
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 0.15s ease, width 0.15s ease, right 0.15s ease;
+}
+
+.cr-custom-scrollbar-thumb:hover,
+.cr-custom-scrollbar-thumb.cr-scrollbar-dragging {
+  background: rgba(255, 255, 255, 0.45);
+  width: 10px;
+  right: 0;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   RESPONSIVE — Progressive toolbar collapse
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* --- Tier 1: Compact — shed decorative elements & button group --- */
+@media (max-width: 900px) {
+  .cr-viewer-toolbar {
+    padding: 10px 12px;
+  }
+
+  .cr-toolbar-left,
+  .cr-toolbar-right {
+    gap: 8px;
+  }
+
+  .cr-toolbar-divider {
+    display: none;
+  }
+
+  .cr-toolbar-btn-group {
+    display: none;
+  }
+
+  .cr-page-progress {
+    display: none;
+  }
+
+  .cr-chapter-btn {
+    min-width: 150px;
+    padding: 10px 14px;
+    gap: 8px;
+  }
+
+  .cr-manga-title {
+    max-width: 220px;
+  }
+
+  .cr-custom-scrollbar,
+  .cr-custom-scrollbar-trigger {
+    display: none !important;
+  }
+
+  .cr-nav-btn {
+    padding: 8px 12px;
+    font-size: 12px;
+  }
+
+  .cr-source-search {
+    padding: 20px;
+  }
+
+  .cr-search-form {
+    flex-direction: column;
+  }
+}
+
+/* --- Tier 2: Narrow — strip to essentials --- */
+@media (max-width: 700px) {
+  .cr-zoom-control {
+    display: none;
+  }
+
+  #cr-mode-btn {
+    display: none;
+  }
+
+  .cr-chapter-btn {
+    min-width: 120px;
+    max-width: 280px;
+  }
+
+  .cr-manga-title {
+    max-width: 180px;
+    font-size: 14px;
+  }
+}
+
+/* --- Tier 3: Minimal — ultra-compact --- */
+@media (max-width: 500px) {
+  .cr-viewer-toolbar {
+    padding: 8px;
+  }
+
+  .cr-toolbar-left,
+  .cr-toolbar-right {
+    gap: 6px;
+  }
+
+  .cr-chapter-btn-title {
+    display: none;
+  }
+
+  .cr-chapter-btn {
+    min-width: 0;
+    max-width: 160px;
+    padding: 8px 12px;
+    font-size: 13px;
+    height: 38px;
+  }
+
+  .cr-manga-title {
+    max-width: 120px;
+    font-size: 13px;
+  }
+
+  .cr-toolbar-btn {
+    width: 36px;
+    height: 36px;
+  }
+
+  .cr-toolbar-hide-btn {
+    margin-left: 4px;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   WAITING STATE
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.cr-waiting {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: #666;
+  font-size: 16px;
+}
+
+.cr-waiting p {
+  margin: 0;
+}

@@ -1,0 +1,525 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   SINGLE PAGE READER STYLES
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.cr-single-page-display {
+  display: flex;
+  width: 100%;
+  height: 100%;
+  position: relative;
+}
+
+.cr-single-page-container {
+  --cr-zoom: 1;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  overflow: auto;
+}
+
+.cr-single-page-wrapper {
+  max-width: 100%;
+  max-height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transform: scale(var(--cr-zoom));
+  transform-origin: center center;
+}
+
+.cr-single-page-img {
+  max-width: 100%;
+  max-height: calc(100vh - 140px); /* Account for toolbar + footer */
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   DOUBLE PAGE READER STYLES
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.cr-double-page-display {
+  display: flex;
+  width: 100%;
+  height: 100%;
+  position: relative;
+}
+
+.cr-double-spread-container {
+  --cr-zoom: 1;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  gap: 4px;
+  overflow: auto;
+}
+
+.cr-double-spread-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  transform: scale(var(--cr-zoom));
+  transform-origin: center center;
+}
+
+.cr-double-spread-container.cr-single-spread {
+  /* Single page in double mode (cover, wide pages) */
+}
+
+.cr-double-spread-container.cr-double-spread {
+  /* True double page spread */
+}
+
+.cr-double-page-wrapper {
+  max-height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.cr-double-spread-container.cr-single-spread .cr-double-page-wrapper {
+  max-width: 100%;
+}
+
+.cr-double-spread-container.cr-double-spread .cr-double-page-wrapper {
+  max-width: 50%;
+}
+
+.cr-double-page-img {
+  max-width: 100%;
+  max-height: calc(100vh - 140px);
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   NAVIGATION ZONES (invisible click areas)
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.cr-nav-zone {
+  position: absolute;
+  top: 0;
+  height: 100%;
+  width: 30%;
+  z-index: 5;
+  cursor: pointer;
+  /* Debug: uncomment to see zones */
+  /* background: rgba(255, 0, 0, 0.1); */
+}
+
+.cr-nav-zone.cr-nav-prev {
+  left: 0;
+}
+
+.cr-nav-zone.cr-nav-next {
+  right: 0;
+}
+
+/* Hover feedback */
+.cr-nav-zone:hover::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 48px;
+  height: 48px;
+  background-color: rgba(255, 255, 255, 0.1);
+  border-radius: 50%;
+  opacity: 0;
+  animation: cr-nav-hint 0.3s ease forwards;
+}
+
+.cr-nav-zone.cr-nav-prev:hover::after {
+  left: 20px;
+}
+
+.cr-nav-zone.cr-nav-next:hover::after {
+  right: 20px;
+}
+
+@keyframes cr-nav-hint {
+  to { opacity: 1; }
+}
+
+/* Navigation arrows on hover */
+.cr-nav-zone::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 24px;
+  height: 24px;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  background-size: contain;
+  background-repeat: no-repeat;
+  pointer-events: none;
+}
+
+.cr-nav-zone:hover::before {
+  opacity: 0.6;
+}
+
+.cr-nav-zone.cr-nav-prev::before {
+  left: 32px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='white'%3E%3Cpath d='M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z'/%3E%3C/svg%3E");
+}
+
+.cr-nav-zone.cr-nav-next::before {
+  right: 32px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='white'%3E%3Cpath d='M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z'/%3E%3C/svg%3E");
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   PAGE INDICATORS
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.cr-page-indicators {
+  position: absolute;
+  bottom: 80px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 6px;
+  padding: 8px 12px;
+  background-color: rgba(0, 0, 0, 0.6);
+  border-radius: 20px;
+  z-index: 10;
+  max-width: 80%;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.cr-page-indicators::-webkit-scrollbar {
+  display: none;
+}
+
+.cr-page-dot {
+  width: 8px;
+  height: 8px;
+  min-width: 8px;
+  background-color: rgba(255, 255, 255, 0.3);
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  padding: 0;
+  transition: all 0.2s ease;
+}
+
+.cr-page-dot:hover {
+  background-color: rgba(255, 255, 255, 0.6);
+}
+
+.cr-page-dot.active {
+  background-color: #6366f1;
+  transform: scale(1.3);
+}
+
+/* Wider dot for double-page spreads */
+.cr-page-dot.cr-spread-dot {
+  width: 16px;
+  border-radius: 4px;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   RESPONSIVE
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+@media (max-width: 768px) {
+  .cr-single-page-container,
+  .cr-double-spread-container {
+    padding: 10px;
+  }
+
+  .cr-page-indicators {
+    bottom: 70px;
+    padding: 6px 10px;
+  }
+
+  .cr-page-dot {
+    width: 6px;
+    height: 6px;
+    min-width: 6px;
+  }
+
+  /* On mobile, double mode might not work well - show single */
+  .cr-double-spread-container.cr-double-spread .cr-double-page-wrapper {
+    max-width: 100%;
+  }
+
+  .cr-double-spread-container.cr-double-spread .cr-double-page-wrapper:last-child {
+    display: none;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   FIT MODES
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* --- Single & Double Page Readers --- */
+
+/* Fit Width - images fill container width */
+.cr-fit-width .cr-single-page-img,
+.cr-fit-width .cr-double-page-img {
+  width: 100%;
+  max-width: none;
+  height: auto;
+  max-height: none;
+  object-fit: contain;
+}
+
+/* Fit Height - images fill viewport height */
+.cr-fit-height .cr-single-page-img,
+.cr-fit-height .cr-double-page-img {
+  width: auto;
+  max-width: none;
+  height: calc(100vh - 140px);
+  max-height: none;
+  object-fit: contain;
+}
+
+/* Fit Height - allow horizontal scroll for wide images */
+.cr-fit-height .cr-single-page-container,
+.cr-fit-height .cr-double-spread-container {
+  overflow-x: auto;
+  justify-content: center;
+}
+
+/* Contain - fit within viewport preserving aspect ratio */
+.cr-fit-contain .cr-single-page-img,
+.cr-fit-contain .cr-double-page-img {
+  max-width: 100%;
+  max-height: calc(100vh - 140px);
+  width: auto;
+  height: auto;
+  object-fit: contain;
+}
+
+/* Original Size - native dimensions, scroll if needed */
+.cr-fit-original .cr-single-page-img,
+.cr-fit-original .cr-double-page-img {
+  max-width: none;
+  max-height: none;
+  width: auto;
+  height: auto;
+}
+
+/* Original Size - allow scrolling */
+.cr-fit-original .cr-single-page-container,
+.cr-fit-original .cr-double-spread-container {
+  overflow: auto;
+  justify-content: flex-start;
+}
+
+/* --- Vertical Reader (uses inline styles primarily, CSS as fallback) --- */
+
+/* Vertical reader in original size mode - allow horizontal scroll */
+.cr-fit-original.cr-mode-vertical {
+  overflow-x: auto;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   CHAPTER NAVIGATION (End of Chapter)
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.cr-chapter-nav {
+  width: 100%;
+  padding: 60px 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: linear-gradient(to bottom, transparent, rgba(0, 0, 0, 0.3));
+}
+
+.cr-chapter-end-label {
+  font-size: 13px;
+  font-weight: 500;
+  color: #555;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  margin-bottom: 20px;
+}
+
+.cr-chapter-nav-content {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 16px 24px;
+  background-color: #1a1a1a;
+  border: 1px solid #333;
+  border-radius: 12px;
+}
+
+.cr-chapter-nav-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 24px;
+  font-size: 15px;
+  font-weight: 500;
+  color: #fff;
+  background-color: #2a2a2a;
+  border: 1px solid #444;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-width: 180px;
+}
+
+.cr-chapter-nav-btn:hover:not(.disabled) {
+  background-color: #333;
+  border-color: #6366f1;
+}
+
+.cr-chapter-nav-btn svg {
+  color: #888;
+}
+
+.cr-chapter-nav-btn:hover:not(.disabled) svg {
+  color: #fff;
+}
+
+/* Disabled state for chapter nav buttons */
+.cr-chapter-nav-btn.disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.cr-next-chapter-btn {
+  background-color: #6366f1;
+  border-color: #6366f1;
+}
+
+.cr-next-chapter-btn:hover:not(.disabled) {
+  background-color: #5558e3;
+  border-color: #5558e3;
+}
+
+.cr-next-chapter-btn svg {
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.cr-next-chapter-btn:hover:not(.disabled) svg {
+  color: #fff;
+}
+
+/* Chapter gap warning - indicates a skipped chapter between current and next/prev */
+.cr-chapter-nav-btn.cr-chapter-gap:not(.disabled) {
+  background-color: #991b1b;
+  border-color: #991b1b;
+}
+
+.cr-chapter-nav-btn.cr-chapter-gap:hover:not(.disabled) {
+  background-color: #b91c1c;
+  border-color: #b91c1c;
+}
+
+.cr-chapter-nav-divider {
+  width: 1px;
+  height: 40px;
+  background-color: #333;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   CONTINUOUS READING CHAPTER DIVIDER
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.cr-chapter-divider {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 32px 20px;
+  user-select: none;
+  align-self: stretch; /* Override parent's align-items: center to span full width */
+}
+
+.cr-chapter-divider-label {
+  font-size: 12px;
+  font-weight: 500;
+  color: #555;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+.cr-chapter-divider-line {
+  width: 100%;
+  height: 1px;
+  background-color: #333;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   SCROLL RESTORE OVERLAY
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.cr-restore-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  opacity: 1;
+  transition: opacity 0.3s ease-out;
+}
+
+.cr-restore-overlay.cr-fade-out {
+  opacity: 0;
+}
+
+.cr-restore-overlay.cr-hidden {
+  display: none;
+}
+
+/* Loading spinner - hidden by default, appears after delay */
+.cr-restore-spinner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  opacity: 0;
+  transform: translateY(10px);
+  transition: opacity 0.4s ease, transform 0.4s ease;
+}
+
+.cr-restore-overlay.cr-show-spinner .cr-restore-spinner {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.cr-restore-spinner-icon {
+  width: 48px;
+  height: 48px;
+  border: 3px solid rgba(255, 255, 255, 0.15);
+  border-top-color: #6366f1;
+  border-radius: 50%;
+  animation: cr-spin 0.9s linear infinite;
+}
+
+.cr-restore-spinner-text {
+  font-size: 14px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.7);
+  letter-spacing: 0.02em;
+}
+
+@keyframes cr-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

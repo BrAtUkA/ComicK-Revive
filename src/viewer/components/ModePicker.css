@@ -1,0 +1,98 @@
+/* Mode Picker / Dropdown Styles */
+
+.cr-dropdown {
+  position: fixed;
+  background-color: #1a1a1a;
+  border: 1px solid #333;
+  border-radius: 10px;
+  min-width: 180px;
+  padding: 8px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+  z-index: 1000002;
+  animation: cr-dropdown-in 0.15s ease;
+}
+
+@keyframes cr-dropdown-in {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.cr-dropdown-section {
+  padding: 4px 0;
+}
+
+.cr-dropdown-label {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: #666;
+  padding: 4px 12px 8px;
+  letter-spacing: 0.5px;
+}
+
+.cr-dropdown-options {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.cr-dropdown-option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 10px 12px;
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  text-align: left;
+  color: #ccc;
+  font-size: 14px;
+  transition: all 0.15s ease;
+}
+
+.cr-dropdown-option:hover {
+  background-color: #222;
+  color: #fff;
+}
+
+.cr-dropdown-option.active {
+  background-color: rgba(99, 102, 241, 0.15);
+  color: #fff;
+}
+
+.cr-dropdown-option svg {
+  color: #888;
+}
+
+.cr-dropdown-option.active svg {
+  color: #6366f1;
+}
+
+.cr-dropdown-option span {
+  flex: 1;
+  white-space: nowrap;
+}
+
+.cr-dropdown-divider {
+  height: 1px;
+  background-color: #333;
+  margin: 8px 0;
+}
+
+/* Keyboard shortcut hints */
+.cr-dropdown-option .cr-shortcut {
+  font-size: 11px;
+  color: #555;
+  background-color: #222;
+  padding: 2px 6px;
+  border-radius: 4px;
+  margin-left: auto;
+}

@@ -1,0 +1,279 @@
+<h1 align="center">ComicK Revive</h1>
+
+<p align="center">
+  An in-page manga reader for <a href="https://comick.dev">ComicK</a>.<br/>
+  ComicK dropped its built-in reader, so this puts one back, pulling chapters from<br/>
+  outside scan sources with caching, position memory, and three reading modes.
+</p>
+
+<p align="center">
+  <img alt="Chrome MV3" src="https://img.shields.io/badge/Chrome-Manifest_V3-4285F4?logo=googlechrome&logoColor=white">
+  <img alt="TypeScript" src="https://img.shields.io/badge/TypeScript-5.x-3178C6?logo=typescript&logoColor=white">
+  <img alt="Vite" src="https://img.shields.io/badge/Vite-5-646CFF?logo=vite&logoColor=white">
+  <img alt="No framework" src="https://img.shields.io/badge/UI-vanilla_DOM-555">
+  <img alt="Version" src="https://img.shields.io/badge/version-0.1.0--beta-orange">
+  <img alt="License" src="https://img.shields.io/badge/License-PolyForm_Noncommercial-blue">
+</p>
+
+<p align="center">
+  <a href="#-features">Features</a> &nbsp;·&nbsp;
+  <a href="#-supported-sources">Sources</a> &nbsp;·&nbsp;
+  <a href="#-installation">Install</a> &nbsp;·&nbsp;
+  <a href="#-usage">Usage</a> &nbsp;·&nbsp;
+  <a href="#%EF%B8%8F-architecture">Architecture</a> &nbsp;·&nbsp;
+  <a href="#%EF%B8%8F-known-issues">Known issues</a>
+</p>
+
+<br/>
+
+> [!WARNING]
+> **Early beta (0.1.0).** The core reading experience is solid, but a few things are still
+> rough or experimental. Read [Known issues](#%EF%B8%8F-known-issues) first. It runs on
+> Chromium browsers only and is loaded unpacked, since it isn't on the Chrome Web Store.
+
+<br/>
+
+## ✨ Features
+
+#### 📖 Reading
+- Three modes: vertical webtoon scroll, single page, and double-page spreads (read right to left). Switch anytime.
+- Zoom and image-fit controls, full keyboard navigation, and smooth scrolling you can tune.
+- Keeps your exact spot by anchoring to an image rather than a scroll position, so resizing, zooming, or switching modes never loses your place.
+
+#### 🔌 Sources
+- Reads from **AsuraScans, MangaDex, and MangaKatana**, with more planned.
+- Link a ComicK title to a source once and it's remembered. A fuzzy search helps you find the right match.
+- Unscrambles AsuraScans' shuffled image tiles on its own.
+
+#### 📂 Library & offline
+- Tracks read/unread per source and per chapter, and the *Continue* button picks up at the exact page and scroll position where you left off, not just the start of the chapter.
+- Caches pages and chapter data locally, so anything you've opened before loads instantly and works with no connection.
+- You set the cache size limit and how it clears old data, and a per-manga cache manager lets you see and prune what's stored.
+
+#### 🧩 Inside ComicK
+- *Start Reading* and *Continue* buttons are injected straight onto ComicK's pages. No new tab, no separate app.
+- A settings panel for background color, image fit, scroll speed, and toolbar auto-hide.
+
+<br/>
+
+## 📚 Supported sources
+
+| Source | Status | How it's fetched |
+|--------|:------:|------------------|
+| **AsuraScans** | ✅ Default | JSON API plus Astro pages. Handles rotating slugs and scrambled tiles. |
+| **MangaDex** | ✅ | Official REST API and the MD@Home image CDN (English). |
+| **MangaKatana** | ✅ | HTML scraping. Sensitive to Cloudflare, so retry if a search comes back empty. |
+| *More* | 🔜 Planned | Additional sources are on the roadmap. |
+
+> Want another source sooner? Adding one is a small, self-contained change. See [Adding a new source](#-adding-a-new-source).
+
+<br/>
+
+## 🚀 Installation
+
+ComicK Revive is a Manifest V3 extension for Chromium browsers (Chrome, Edge, Brave). It isn't on the Chrome Web Store, so you load it unpacked.
+
+### Pre-built (easiest)
+
+1. Grab `comick-revive-v0.1.0.zip` from the [**Releases**](../../releases) page.
+2. Unzip it somewhere.
+3. Open `chrome://extensions` and turn on **Developer mode** (top right).
+4. Click **Load unpacked** and pick the unzipped folder.
+5. Head to [comick.dev](https://comick.dev), open a manga, and hit the **Read** button.
+
+### Build from source
+
+You'll need [Node.js](https://nodejs.org) 18+ and npm.
+
+```bash
+git clone https://github.com/BrAtUkA/ComicK-Revive.git
+cd ComicK-Revive
+npm install
+npm run build        # production build into dist/
+```
+
+Load the `dist/` folder with **Load unpacked**, same as above. Reload the extension after each rebuild.
+
+| Command | What it does |
+|---------|--------------|
+| `npm run build` | Type-checks and builds into `dist/` (debug logs stripped) |
+| `npm run dev` | Watch build that keeps debug logs |
+| `npm run package` | Builds, then zips `dist/` into `release/comick-revive-v<version>.zip` |
+
+> Production builds drop `console.log`/`info`/`debug` on their own. `warn` and `error` stay. Pass `DEBUG=1` to any build if you want all of it.
+
+<br/>
+
+## 🎮 Usage
+
+1. Open a manga or chapter on **comick.dev**.
+2. Click **Start Reading**, or **Continue Ch. N** if you've read some already.
+3. The first time you open a title, pick the matching manga on a source. That choice is saved.
+4. Read. Position, mode, and progress all save themselves.
+
+### Keyboard shortcuts
+
+| Key | Action | | Key | Action |
+|-----|--------|---|-----|--------|
+| `W` / `↑` | Previous page | | `1` / `2` / `3` | Vertical / Single / Double mode |
+| `S` / `↓` | Next page | | `+` / `-` / `0` | Zoom in / out / reset |
+| `A` / `←` | Previous chapter | | `Space` / `Shift`+`Space` | Scroll down / up |
+| `D` / `→` | Next chapter | | `Home` | Scroll to top |
+| `F` | Fullscreen | | `G` | Settings |
+| `T` | Toggle toolbar | | `Esc` | Close reader |
+
+<br/>
+
+## 🏗️ Architecture
+
+The extension lives in three separate worlds that can't see each other's globals, so code written for one will break in another. A small message bridge connects them, and every outside request goes through the background worker to get around CORS.
+
+```mermaid
+flowchart LR
+    subgraph PAGE["comick.dev page"]
+        BTN["Injected Read button"]
+        VIEW["Viewer (reader UI)<br/>full DOM, no chrome.* APIs"]
+    end
+
+    subgraph EXT["Extension"]
+        CS["Content Script<br/>chrome.* + ComicK DOM"]
+        BG["Background Worker<br/>CORS proxy + IndexedDB caches"]
+    end
+
+    subgraph SRC["External sources"]
+        AS["AsuraScans"]
+        MD["MangaDex"]
+        MK["MangaKatana"]
+    end
+
+    BTN -->|click, injects viewer| VIEW
+    VIEW <-->|"window.postMessage (bridge.ts)"| CS
+    CS <-->|chrome.runtime.sendMessage| BG
+    BG -->|"fetch + source headers / DNR"| AS & MD & MK
+    BG <--> IDB[("IndexedDB<br/>images + metadata")]
+
+    style VIEW fill:#3b0764,color:#efe1ff,stroke:#a855f7
+    style CS fill:#1e3a5f,color:#cfe3ff,stroke:#3b82f6
+    style BG fill:#14532d,color:#dcfce7,stroke:#22c55e
+    style IDB fill:#14532d,color:#dcfce7,stroke:#22c55e
+    style AS fill:#7c2d12,color:#fde6d5,stroke:#ea580c
+    style MD fill:#7c2d12,color:#fde6d5,stroke:#ea580c
+    style MK fill:#7c2d12,color:#fde6d5,stroke:#ea580c
+```
+
+| Context | Entry | Has `chrome.*` | Has DOM | Role |
+|---------|-------|:--------------:|:-------:|------|
+| **Content script** | `src/content/index.ts` | ✅ | ComicK DOM | Detect pages, inject buttons, relay the bridge |
+| **Background worker** | `src/background/index.ts` | ✅ | ❌ | CORS proxy, IndexedDB image and data caches |
+| **Viewer** | `src/viewer/index.ts` | ❌ | ✅ | The reader overlay; goes through the bridge for everything |
+
+### How a chapter loads
+
+Every source sits behind a caching layer that checks the cache before it ever touches the network, and patches itself if a cached image goes missing.
+
+```mermaid
+flowchart TD
+    A["Open chapter"] --> B["CachedSource.getChapterPages"]
+    B --> C{"All image blobs<br/>already cached?"}
+    C -->|Yes| D["Serve cached:// URLs<br/>from the IndexedDB blob cache"]
+    C -->|No| E{"Page-URL list<br/>cached? (7-day TTL)"}
+    E -->|Yes| F["Reuse the cached page URLs"]
+    E -->|No| G["Fetch fresh from the source"]
+    D --> R["Render pages"]
+    F --> R
+    G --> R
+    R --> H{"A cached blob<br/>fails to read?"}
+    H -->|Yes| J["Self-heal: re-fetch the real<br/>URL from source, re-cache the blob"]
+    H -->|No| K["Done"]
+    J --> K
+
+    style D fill:#14532d,color:#dcfce7,stroke:#22c55e
+    style F fill:#14532d,color:#dcfce7,stroke:#22c55e
+    style G fill:#7c2d12,color:#fde6d5,stroke:#ea580c
+    style J fill:#1e3a5f,color:#cfe3ff,stroke:#3b82f6
+    style K fill:#3b0764,color:#efe1ff,stroke:#a855f7
+```
+
+<br/>
+
+## 🧰 Tech stack
+
+| Layer | Technology |
+|-------|-----------|
+| Platform | Chrome Manifest V3 (service worker, content script, declarativeNetRequest) |
+| Language | TypeScript 5 |
+| Build | [Vite](https://vitejs.dev) 5, three self-contained entry points with no shared chunks |
+| UI | Vanilla DOM, no framework. Classes with co-located CSS |
+| Storage | `chrome.storage.local` plus IndexedDB (image blobs and source metadata) |
+| Icons | [Lucide](https://lucide.dev) |
+
+<br/>
+
+## 🗂️ Project structure
+
+```
+ComicK-Revive/
+├── src/
+│   ├── background/      # Service worker: CORS proxy + IndexedDB caches
+│   ├── content/         # Content script: page detection, button injection, bridge relay
+│   ├── viewer/          # Reader UI (runs in page context)
+│   │   ├── readers/     # Vertical / Single / Double page readers (+ continuous reading)
+│   │   └── components/  # Source-link modal, chapter picker, settings, cache manager, ...
+│   ├── sources/         # MangaSource impls + CachedSource wrapper + registry
+│   ├── core/            # Storage, Settings, ReadingState, SourceMapping, image/data caches
+│   ├── utils/           # bridge, imageLoader, fuzzy-match, keyboard, smooth-scroll, ...
+│   ├── shared/          # Code shared across contexts (HTML title parsing)
+│   └── types/           # Shared TypeScript types + defaults
+├── rules/               # declarativeNetRequest header rules (per source)
+├── assets/icons/        # Extension icons
+├── scripts/package.cjs  # Builds the installable release zip
+├── manifest.json        # MV3 manifest
+└── vite.config.ts       # One build entry per execution context
+```
+
+<br/>
+
+## 🧩 Adding a new source
+
+1. Implement the `MangaSource` interface (`src/sources/Source.interface.ts`) in `src/sources/YourSource.ts`.
+2. Register it in `src/sources/index.ts` with `this.register(yourSource)`. It gets wrapped in the caching layer automatically.
+3. Add the site's domains to `host_permissions` in `manifest.json` (and a DNR rule in `rules/` if the CDN needs a `Referer`).
+4. Add its domain config (referer and headers) to `src/utils/sourceDomains.ts`.
+
+The Kotlin source implementations in the Tachiyomi / keiyoushi ecosystem are a good reference for parsing each site.
+
+<br/>
+
+## ⚠️ Known issues
+
+This is a `0.1.0` beta, so expect rough edges. Sources can also break when a site changes its markup. If a title stops loading, try the chapter **refresh** button or re-link the source.
+
+- **Continuous reading** (scrolling straight from one chapter into the next) is **experimental and off by default**. It can break when you resume a session, so turn it on in settings only if you want to try it.
+- The **page counter** sometimes freezes during fast navigation.
+- **Single and double-page** modes aren't as polished as vertical scroll yet.
+- **MangaKatana** sits behind Cloudflare, so an empty search result usually just means "try again in a moment".
+- Chromium browsers only. No Firefox.
+
+<br/>
+
+## 🙏 Acknowledgements
+
+- [**ComicK**](https://comick.dev), the site this builds on.
+- The **Tachiyomi / [keiyoushi](https://github.com/keiyoushi/extensions-source)** extensions (Apache-2.0). The source-parsing logic is based on their Kotlin implementations.
+- [**Lucide**](https://lucide.dev) for the icons.
+
+<br/>
+
+## 📄 License & disclaimer
+
+Licensed under the **[PolyForm Noncommercial License 1.0.0](LICENSE.md)**. Free for any noncommercial use; commercial use isn't allowed.
+
+Please also read the [**DISCLAIMER**](DISCLAIMER.md). ComicK Revive is an unofficial fan project. It isn't affiliated with any of the sites it talks to, it hosts none of its own content, and it's meant for personal use. Following each source's Terms of Service and your local copyright law is on you.
+
+<br/>
+
+<p align="center">
+  <a href="https://github.com/BrAtUkA">
+    <img src="https://raw.githubusercontent.com/BrAtUkA/BrAtUkA/main/imgs/logo-flat-white.png" alt="BrAtUkA" height="30"/>
+  </a>
+</p>

@@ -1,0 +1,24 @@
+[
+  {
+    "id": 100,
+    "priority": 1,
+    "action": {
+      "type": "modifyHeaders",
+      "requestHeaders": [
+        {
+          "header": "Origin",
+          "operation": "remove"
+        },
+        {
+          "header": "Referer",
+          "operation": "set",
+          "value": "https://asurascans.com/"
+        }
+      ]
+    },
+    "condition": {
+      "requestDomains": ["cdn.asurascans.com", "asurascans.com", "api.asurascans.com"],
+      "resourceTypes": ["xmlhttprequest", "image", "other"]
+    }
+  }
+]

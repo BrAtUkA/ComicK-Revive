@@ -1,0 +1,33 @@
+/* Lucide Icons font-face */
+@font-face {
+  font-family: "lucide";
+  src: url('../../assets/fonts/lucide.woff2') format('woff2');
+  font-display: swap;
+}
+
+/* Base icon class */
+.cr-icon {
+  font-family: 'lucide' !important;
+  font-style: normal;
+  font-weight: normal;
+  font-variant: normal;
+  text-transform: none;
+  line-height: 1;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Icon definitions */
+.cr-icon-star::before { content: "\e176"; }
+.cr-icon-pause::before { content: "\e12e"; }
+.cr-icon-circle-pause::before { content: "\e07f"; }
+.cr-icon-clock::before { content: "\e087"; }
+.cr-icon-hourglass::before { content: "\e296"; }
+.cr-icon-search::before { content: "\e151"; }
+.cr-icon-search-x::before { content: "\e4ad"; }
+.cr-icon-alert::before { content: "\e193"; }
+.cr-icon-loader::before { content: "\e109"; }
+.cr-icon-arrow-left::before { content: "\e048"; }
+.cr-icon-chevron-down::before { content: "\e072"; }
+.cr-icon-x::before { content: "\e198"; }
+.cr-icon-info::before { content: "\e0ed"; }

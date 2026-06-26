@@ -1,0 +1,33 @@
+{
+  "name": "comick-revive",
+  "version": "0.1.0",
+  "description": "Read manga directly on ComicK from various sources",
+  "type": "module",
+  "author": "BrAtUkA",
+  "license": "PolyForm-Noncommercial-1.0.0",
+  "homepage": "https://github.com/BrAtUkA/ComicK-Revive#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/BrAtUkA/ComicK-Revive.git"
+  },
+  "bugs": {
+    "url": "https://github.com/BrAtUkA/ComicK-Revive/issues"
+  },
+  "scripts": {
+    "dev": "vite build --watch --mode development",
+    "build": "tsc && vite build",
+    "package": "npm run build && node scripts/package.cjs",
+    "preview": "vite preview"
+  },
+  "devDependencies": {
+    "@types/chrome": "^0.0.260",
+    "adm-zip": "^0.5.16",
+    "sharp": "^0.34.5",
+    "typescript": "^5.3.3",
+    "vite": "^5.0.12",
+    "vite-plugin-web-extension": "^4.0.0"
+  },
+  "dependencies": {
+    "lucide-static": "^0.562.0"
+  }
+}

@@ -1,0 +1,43 @@
+# ─────────────────────────────────────────────────────────────
+# ComicK Revive — only source/code and build inputs are tracked.
+# Everything else (build output, deps, local notes, archives) is ignored.
+# ─────────────────────────────────────────────────────────────
+
+# Dependencies
+node_modules/
+
+# Build output / packaged artifacts
+dist/
+release/
+*.zip
+
+# Local-only working dirs (not shipped to the public repo)
+docs/
+logs/
+testing/
+shared/
+
+# Tooling / binaries
+*.exe
+
+# AI assistant / editor scratch
+CLAUDE.md
+CLAUDE.local.md
+.claude/
+tmpclaude-*
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS junk
+.DS_Store
+Thumbs.db
+nul
+
+# Secrets / environment
+.env
+.env.*
+*.pem
+*.key
+*.keystore

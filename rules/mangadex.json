@@ -1,0 +1,24 @@
+[
+  {
+    "id": 1,
+    "priority": 1,
+    "action": {
+      "type": "modifyHeaders",
+      "requestHeaders": [
+        {
+          "header": "Origin",
+          "operation": "remove"
+        },
+        {
+          "header": "Referer",
+          "operation": "set",
+          "value": "https://mangadex.org/"
+        }
+      ]
+    },
+    "condition": {
+      "requestDomains": ["mangadex.network"],
+      "resourceTypes": ["xmlhttprequest", "image", "other"]
+    }
+  }
+]

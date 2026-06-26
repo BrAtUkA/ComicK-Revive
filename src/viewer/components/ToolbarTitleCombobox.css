@@ -1,0 +1,226 @@
+/* ToolbarTitleCombobox — compact toolbar title widget */
+
+/* Wrapper */
+.cr-toolbar-title-combobox {
+  position: relative;
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  flex-shrink: 1;
+}
+
+/* Edit container */
+.cr-toolbar-title-edit {
+  display: flex;
+  align-items: center;
+  position: relative;
+  gap: 4px;
+}
+
+/* Input — width set dynamically via JS to match the display span */
+.cr-toolbar-title-input {
+  font-size: 14px;
+  font-weight: 600;
+  color: #fff;
+  background-color: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 4px;
+  padding: 4px 28px 4px 8px;
+  min-width: 300px;
+  outline: none;
+  font-family: inherit;
+  box-sizing: border-box;
+}
+
+.cr-toolbar-title-input:focus {
+  border-color: #6366f1;
+  background-color: rgba(255, 255, 255, 0.15);
+}
+
+/* Dropdown toggle button — inside the input area */
+.cr-toolbar-title-dropdown-btn {
+  position: absolute;
+  right: 32px; /* before reset button */
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: calc(100% - 6px);
+  background: transparent;
+  border: none;
+  border-radius: 3px;
+  cursor: pointer;
+  color: #888;
+  transition: all 0.15s ease;
+  padding: 0;
+}
+
+.cr-toolbar-title-dropdown-btn:hover {
+  color: #fff;
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.cr-toolbar-title-dropdown-btn svg {
+  width: 14px;
+  height: 14px;
+  transition: transform 0.2s ease;
+}
+
+.cr-toolbar-title-dropdown-btn.open svg {
+  transform: rotate(180deg);
+}
+
+/* Reset button */
+.cr-toolbar-title-reset-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  background-color: rgba(255, 255, 255, 0.1);
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  color: #888;
+  transition: all 0.15s ease;
+  padding: 0;
+  flex-shrink: 0;
+}
+
+.cr-toolbar-title-reset-btn:hover {
+  background-color: rgba(239, 68, 68, 0.3);
+  color: #ef4444;
+}
+
+.cr-toolbar-title-reset-btn svg {
+  width: 14px;
+  height: 14px;
+}
+
+/* Dropdown menu */
+.cr-toolbar-title-dropdown {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  width: 300px;
+  max-height: 240px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  background-color: #1a1a1a;
+  border: 1px solid #333;
+  border-radius: 6px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+  z-index: 200;
+  display: none;
+  overscroll-behavior: contain;
+}
+
+.cr-toolbar-title-dropdown.open {
+  display: block;
+}
+
+/* Custom scrollbar */
+.cr-toolbar-title-dropdown::-webkit-scrollbar {
+  width: 6px;
+}
+
+.cr-toolbar-title-dropdown::-webkit-scrollbar-track {
+  background: transparent;
+  margin: 4px 0;
+}
+
+.cr-toolbar-title-dropdown::-webkit-scrollbar-thumb {
+  background-color: #444;
+  border-radius: 3px;
+}
+
+.cr-toolbar-title-dropdown::-webkit-scrollbar-thumb:hover {
+  background-color: #666;
+}
+
+/* Firefox scrollbar */
+.cr-toolbar-title-dropdown {
+  scrollbar-width: thin;
+  scrollbar-color: #444 transparent;
+}
+
+/* Dropdown items */
+.cr-toolbar-title-dropdown-item {
+  padding: 8px 12px;
+  font-size: 13px;
+  color: #ccc;
+  cursor: pointer;
+  border-bottom: 1px solid #2a2a2a;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  transition: background-color 0.15s ease;
+}
+
+.cr-toolbar-title-dropdown-item:last-child {
+  border-bottom: none;
+}
+
+.cr-toolbar-title-dropdown-item:hover {
+  background-color: #333;
+  color: #fff;
+}
+
+.cr-toolbar-title-dropdown-item.highlighted {
+  background-color: #3730a3;
+  color: #fff;
+}
+
+.cr-toolbar-title-dropdown-item.selected {
+  color: #a78bfa;
+}
+
+.cr-toolbar-title-dropdown-item mark {
+  background-color: #6366f1;
+  color: #fff;
+  border-radius: 2px;
+  padding: 0 1px;
+}
+
+.cr-toolbar-title-dropdown-empty {
+  padding: 10px 12px;
+  font-size: 13px;
+  color: #666;
+  font-style: italic;
+  text-align: center;
+}
+
+/* Responsive — matches toolbar breakpoints */
+@media (max-width: 900px) {
+  .cr-toolbar-title-input {
+    min-width: 240px;
+  }
+
+  .cr-toolbar-title-dropdown {
+    width: 240px;
+  }
+}
+
+@media (max-width: 700px) {
+  .cr-toolbar-title-input {
+    min-width: 200px;
+    font-size: 13px;
+  }
+
+  .cr-toolbar-title-dropdown {
+    width: 200px;
+  }
+}
+
+@media (max-width: 500px) {
+  .cr-toolbar-title-input {
+    min-width: 160px;
+    font-size: 12px;
+  }
+
+  .cr-toolbar-title-dropdown {
+    width: 160px;
+  }
+}
