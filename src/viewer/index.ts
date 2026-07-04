@@ -1,6 +1,6 @@
 import { viewer } from './Viewer';
 import { ComickPageData } from '@/types';
-import './viewer.css';
+import './Viewer.css';
 import './components/icons.css';
 
 /**
