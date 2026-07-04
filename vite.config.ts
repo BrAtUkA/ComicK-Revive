@@ -2,41 +2,48 @@ import { defineConfig } from 'vite';
 import { resolve } from 'path';
 import { copyFileSync, mkdirSync, existsSync } from 'fs';
 
-// Plugin to copy manifest and assets after build
+// Resolve everything against the directory npm ran the build from (the
+// package root). This is identical on every OS and Node version, unlike
+// `__dirname`, which Vite has to shim inside its temporary ESM-compiled
+// config and which resolved differently under Linux/Node 20 in CI (the
+// source of the "manifest.json ENOENT / only 10 modules" release failure).
+const projectRoot = process.cwd();
+const fromRoot = (...segments: string[]) => resolve(projectRoot, ...segments);
+
+// Plugin to copy manifest and static assets into dist after the bundle.
 const copyManifestPlugin = () => ({
   name: 'copy-manifest',
   closeBundle() {
-    // Copy manifest.json
-    copyFileSync(
-      resolve(__dirname, 'manifest.json'),
-      resolve(__dirname, 'dist/manifest.json')
-    );
+    const distDir = fromRoot('dist');
+    // The bundle write should have created dist, but guarantee it so a copy
+    // can never fail on a missing destination directory.
+    mkdirSync(distDir, { recursive: true });
 
-    // Copy extension page shells (static HTML referencing built entry JS)
-    copyFileSync(
-      resolve(__dirname, 'src/dashboard/dashboard.html'),
-      resolve(__dirname, 'dist/dashboard.html')
-    );
-    copyFileSync(
-      resolve(__dirname, 'src/popup/popup.html'),
-      resolve(__dirname, 'dist/popup.html')
-    );
-
-    // Copy content styles directly (for CSS file reference in manifest)
-    const contentStylesSrc = resolve(__dirname, 'src/content/styles.css');
-    const contentStylesDest = resolve(__dirname, 'dist/content.css');
-    if (existsSync(contentStylesSrc)) {
-      copyFileSync(contentStylesSrc, contentStylesDest);
+    // Required files: fail loudly with the exact path if one is missing,
+    // instead of a cryptic ENOENT.
+    const required: Array<[string, string]> = [
+      [fromRoot('manifest.json'), resolve(distDir, 'manifest.json')],
+      [fromRoot('src/dashboard/dashboard.html'), resolve(distDir, 'dashboard.html')],
+      [fromRoot('src/popup/popup.html'), resolve(distDir, 'popup.html')],
+    ];
+    for (const [src, dest] of required) {
+      if (!existsSync(src)) {
+        throw new Error(`[copy-manifest] Required file not found: ${src}`);
+      }
+      copyFileSync(src, dest);
     }
 
-    // Copy declarativeNetRequest rules
-    const rulesSrcDir = resolve(__dirname, 'rules');
-    const rulesDestDir = resolve(__dirname, 'dist/rules');
+    // Content styles (referenced by name in the manifest).
+    const contentStylesSrc = fromRoot('src/content/styles.css');
+    if (existsSync(contentStylesSrc)) {
+      copyFileSync(contentStylesSrc, resolve(distDir, 'content.css'));
+    }
+
+    // declarativeNetRequest rule files.
+    const rulesSrcDir = fromRoot('rules');
     if (existsSync(rulesSrcDir)) {
-      if (!existsSync(rulesDestDir)) {
-        mkdirSync(rulesDestDir, { recursive: true });
-      }
-      // Copy all rule JSON files
+      const rulesDestDir = resolve(distDir, 'rules');
+      mkdirSync(rulesDestDir, { recursive: true });
       for (const ruleFile of ['mangadex.json', 'asura.json']) {
         const ruleSrc = resolve(rulesSrcDir, ruleFile);
         if (existsSync(ruleSrc)) {
@@ -45,22 +52,16 @@ const copyManifestPlugin = () => ({
       }
     }
 
-    // Ensure assets/icons directory exists
-    const iconsDir = resolve(__dirname, 'dist/assets/icons');
-    if (!existsSync(iconsDir)) {
-      mkdirSync(iconsDir, { recursive: true });
-    }
-
-    // Copy icons if they exist
-    const iconFiles = ['icon-16.png', 'icon-48.png', 'icon-128.png', 'claude-logo.png'];
-    for (const file of iconFiles) {
-      const srcPath = resolve(__dirname, `assets/icons/${file}`);
-      const destPath = resolve(__dirname, `dist/assets/icons/${file}`);
+    // Icons.
+    const iconsDir = resolve(distDir, 'assets/icons');
+    mkdirSync(iconsDir, { recursive: true });
+    for (const file of ['icon-16.png', 'icon-48.png', 'icon-128.png', 'claude-logo.png']) {
+      const srcPath = fromRoot('assets/icons', file);
       if (existsSync(srcPath)) {
-        copyFileSync(srcPath, destPath);
+        copyFileSync(srcPath, resolve(iconsDir, file));
       }
     }
-  }
+  },
 });
 
 export default defineConfig(({ mode }) => {
@@ -80,11 +81,11 @@ export default defineConfig(({ mode }) => {
       cssCodeSplit: false,
       rollupOptions: {
         input: {
-          content: resolve(__dirname, 'src/content/index.ts'),
-          background: resolve(__dirname, 'src/background/index.ts'),
-          viewer: resolve(__dirname, 'src/viewer/index.ts'),
-          dashboard: resolve(__dirname, 'src/dashboard/index.ts'),
-          popup: resolve(__dirname, 'src/popup/index.ts'),
+          content: fromRoot('src/content/index.ts'),
+          background: fromRoot('src/background/index.ts'),
+          viewer: fromRoot('src/viewer/index.ts'),
+          dashboard: fromRoot('src/dashboard/index.ts'),
+          popup: fromRoot('src/popup/index.ts'),
         },
         output: {
           format: 'es',
@@ -102,7 +103,7 @@ export default defineConfig(({ mode }) => {
     },
     resolve: {
       alias: {
-        '@': resolve(__dirname, 'src'),
+        '@': fromRoot('src'),
       },
     },
   };

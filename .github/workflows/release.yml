@@ -22,7 +22,7 @@ jobs:
       - name: Set up Node
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: npm
 
       - name: Install dependencies
@@ -30,6 +30,16 @@ jobs:
 
       - name: Build and package
         run: npm run package
+
+      - name: Verify build output
+        run: |
+          for f in manifest.json background.js content.js viewer.js dashboard.js dashboard.html popup.js popup.html; do
+            if [ ! -f "dist/$f" ]; then
+              echo "::error::Missing expected build output dist/$f — refusing to publish a broken release."
+              exit 1
+            fi
+          done
+          echo "Build output verified."
 
       - name: Publish release
         uses: softprops/action-gh-release@v2
