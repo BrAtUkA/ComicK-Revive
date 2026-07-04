@@ -505,7 +505,9 @@ export class GridView {
     // Full rebuild
     const isRelevant = this.activeSourceFilter === 'relevant';
     const groups: Map<string, SearchResult[]> = isRelevant ? new Map() : this.getResultsGroupedBySource();
-    const allSources = sourceRegistry.getAll();
+    // Display-only: filtered below to sources that actually have results,
+    // which may include a disabled source from a forced re-search
+    const allSources = sourceRegistry.getAll({ includeDisabled: true });
 
     // Count results per source (unfiltered) for filter bar
     const sourceCounts = new Map<string, number>();
@@ -848,7 +850,7 @@ export class GridView {
     }
 
     // Add buttons for any new sources that appeared
-    const allSources = sourceRegistry.getAll();
+    const allSources = sourceRegistry.getAll({ includeDisabled: true });
     const sourcesWithResults = allSources.filter(s => sourceCounts.has(s.id));
     if (sourcesWithResults.length > 1 && !allBtn) {
       // Filter bar didn't exist before (was single source) — need full rebuild for it

@@ -4,3 +4,6 @@ export { SettingsManager, settingsManager } from './Settings';
 export { ReadingStateManager, readingStateManager } from './ReadingState';
 export { SourceMappingManager, sourceMappingManager } from './SourceMapping';
 export { ImageCacheManager, imageCache, type CacheKey, type CachedImage, type CacheSettings } from './ImageCache';
+export { StatsManager, statsManager, dayKey, type DailyStats, type StatsTotals } from './Stats';
+export { SourceConfigManager, sourceConfigManager, type SourceConfig } from './SourceConfig';
+export { UserSourcesManager, userSourcesManager } from './UserSources';

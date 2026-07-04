@@ -39,7 +39,7 @@ class ContentScript {
 
     // Parse current page
     this.currentPageData = ComickParser.parse();
-    
+
     if (this.currentPageData) {
       console.log('[ComicK Revive] Detected page:', this.currentPageData);
       await this.injector.inject(this.currentPageData);
@@ -49,6 +49,44 @@ class ContentScript {
     this.cleanupNavObserver = ComickParser.observeNavigation(
       this.handleNavigation.bind(this)
     );
+
+    this.maybeHandleDeepLink();
+  }
+
+  /**
+   * Deep link from the dashboard/popup: /comic/{slug}?crv_resume=1 auto-opens
+   * the reader at the saved position (same semantics as the "Continue
+   * Reading" button). The param is stripped so a plain refresh doesn't
+   * reopen the reader.
+   */
+  private maybeHandleDeepLink(): void {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('crv_resume') !== '1') return;
+
+    params.delete('crv_resume');
+    const query = params.toString();
+    history.replaceState(null, '', window.location.pathname + (query ? `?${query}` : '') + window.location.hash);
+
+    if (this.currentPageData?.pageType !== 'manga') return;
+
+    // Wait for the page to fully load before opening. Auto-opening while
+    // ComicK is still hydrating can leave the underlying page scrollable
+    // behind the reader (light scrollbars showing as white strips at the
+    // edges). A manual button click never hits this because the user clicks
+    // after the page has settled.
+    const openWhenSettled = () => {
+      setTimeout(() => {
+        if (this.currentPageData?.pageType === 'manga') {
+          console.log('[ComicK Revive] Deep link detected, auto-opening reader');
+          void this.handleButtonClick({ ...this.currentPageData, forceResume: true });
+        }
+      }, 600);
+    };
+    if (document.readyState === 'complete') {
+      openWhenSettled();
+    } else {
+      window.addEventListener('load', openWhenSettled, { once: true });
+    }
   }
 
   /**

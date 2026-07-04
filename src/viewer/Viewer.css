@@ -18,6 +18,18 @@
   flex-direction: column;
   background-color: #0a0a0a;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+  /* Force dark native scrollbars inside the reader regardless of what the
+     host page's color-scheme is at the moment the viewer opens */
+  color-scheme: dark;
+}
+
+/* The container is a programmatic focus target (tabIndex=-1) for keyboard
+   shortcuts. Without this, Chrome paints its default focus ring around the
+   whole viewport after Space/arrow use: white strips along all four edges
+   that vanish while the window is unfocused. */
+.cr-viewer:focus,
+.cr-viewer:focus-visible {
+  outline: none;
 }
 
 /* Disable browser's native scroll anchoring - we handle this ourselves */

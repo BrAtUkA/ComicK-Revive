@@ -217,4 +217,8 @@ export const STORAGE_KEYS = {
   GLOBAL_SETTINGS: 'global_settings',
   SOURCE_MAPPING_PREFIX: 'source_mapping_',
   READING_STATE_PREFIX: 'reading_state_',
+  STATS_DAILY_PREFIX: 'stats_daily_',
+  STATS_TOTALS: 'stats_totals',
+  SOURCE_CONFIG: 'source_config',
+  USER_SOURCE_PREFIX: 'user_source_',
 } as const;

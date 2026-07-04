@@ -16,6 +16,7 @@ export class MangaKatana implements MangaSource {
   id = 'mangakatana';
   name = 'MangaKatana';
   baseUrl = 'https://mangakatana.com';
+  iconUrl = 'https://mangakatana.com/static/img/logo.png';
 
   // Abort controller for cancelling searches
   private searchAbortController?: AbortController;

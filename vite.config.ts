@@ -12,6 +12,16 @@ const copyManifestPlugin = () => ({
       resolve(__dirname, 'dist/manifest.json')
     );
 
+    // Copy extension page shells (static HTML referencing built entry JS)
+    copyFileSync(
+      resolve(__dirname, 'src/dashboard/dashboard.html'),
+      resolve(__dirname, 'dist/dashboard.html')
+    );
+    copyFileSync(
+      resolve(__dirname, 'src/popup/popup.html'),
+      resolve(__dirname, 'dist/popup.html')
+    );
+
     // Copy content styles directly (for CSS file reference in manifest)
     const contentStylesSrc = resolve(__dirname, 'src/content/styles.css');
     const contentStylesDest = resolve(__dirname, 'dist/content.css');
@@ -42,10 +52,10 @@ const copyManifestPlugin = () => ({
     }
 
     // Copy icons if they exist
-    const iconSizes = ['16', '48', '128'];
-    for (const size of iconSizes) {
-      const srcPath = resolve(__dirname, `assets/icons/icon-${size}.png`);
-      const destPath = resolve(__dirname, `dist/assets/icons/icon-${size}.png`);
+    const iconFiles = ['icon-16.png', 'icon-48.png', 'icon-128.png', 'claude-logo.png'];
+    for (const file of iconFiles) {
+      const srcPath = resolve(__dirname, `assets/icons/${file}`);
+      const destPath = resolve(__dirname, `dist/assets/icons/${file}`);
       if (existsSync(srcPath)) {
         copyFileSync(srcPath, destPath);
       }
@@ -73,6 +83,8 @@ export default defineConfig(({ mode }) => {
           content: resolve(__dirname, 'src/content/index.ts'),
           background: resolve(__dirname, 'src/background/index.ts'),
           viewer: resolve(__dirname, 'src/viewer/index.ts'),
+          dashboard: resolve(__dirname, 'src/dashboard/index.ts'),
+          popup: resolve(__dirname, 'src/popup/index.ts'),
         },
         output: {
           format: 'es',

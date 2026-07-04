@@ -1,0 +1,65 @@
+{
+  "spec": 1,
+  "id": "weebcentral",
+  "name": "WeebCentral",
+  "baseUrl": "https://weebcentral.com",
+  "lang": "en",
+  "referer": "https://weebcentral.com/",
+  "imageHosts": ["https://*/*"],
+  "requestDelayMs": 2000,
+  "search": {
+    "url": "{base}/search/data?text={query}&limit=32&offset={offset}&sort=Best+Match&order=Descending&display_mode=Full+Display",
+    "pageSize": 32,
+    "queryReplace": ["[!#:(),\\-]", " "],
+    "list": {
+      "rows": "article > section > a",
+      "fields": {
+        "title": { "sel": "div:not([class])" },
+        "url": { "attr": "href" },
+        "thumbnail": { "sel": "img", "attr": "src" }
+      }
+    },
+    "slugRegex": "/series/([^/]+)"
+  },
+  "details": {
+    "url": "{base}/series/{slug}",
+    "fields": {
+      "title": { "sel": "section[x-data] > section", "index": 1, "then": { "sel": "h1" } },
+      "description": { "sel": "section[x-data] > section", "index": 1, "then": { "sel": "li", "containsText": "Description", "then": { "sel": "p" } } },
+      "author": { "sel": "section[x-data] > section", "index": 0, "then": { "sel": "ul > li", "containsText": "Author", "then": { "sel": "span > a" } } },
+      "status": {
+        "sel": "section[x-data] > section", "index": 0,
+        "then": { "sel": "ul > li", "containsText": "Status", "then": { "sel": "a" } },
+        "map": { "Ongoing": "Ongoing", "Complete": "Completed", "Hiatus": "Hiatus", "Canceled": "Cancelled" }
+      },
+      "genres": { "sel": "section[x-data] > section", "index": 0, "then": { "sel": "ul > li", "containsText": "Tag", "then": { "sel": "a" } } },
+      "thumbnail": {
+        "sel": "section[x-data] > section", "index": 0,
+        "then": { "sel": "source", "attr": "srcset", "regex": "^\\S+", "replace": [["small", "normal"]] },
+        "fallback": { "sel": "section[x-data] > section", "index": 0, "then": { "sel": "img", "attr": "src" } }
+      }
+    }
+  },
+  "chapters": {
+    "url": "{base}/series/{slug}/full-chapter-list",
+    "list": {
+      "rows": "div[x-data] > a",
+      "fields": {
+        "url": { "attr": "href" },
+        "title": { "sel": "span.flex > span" },
+        "date": { "sel": "time[datetime]", "attr": "datetime" }
+      }
+    },
+    "chapterSlugRegex": "/chapters/([^/?#]+)",
+    "dateFormat": "iso"
+  },
+  "pages": {
+    "url": "{base}/chapters/{chapterSlug}/images?is_prev=False&reading_style=long_strip",
+    "list": {
+      "rows": "section[x-data*=scroll] > img",
+      "fields": {
+        "url": { "attr": "src" }
+      }
+    }
+  }
+}

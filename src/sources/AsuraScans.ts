@@ -70,7 +70,7 @@ export class AsuraScans implements MangaSource {
   name = 'AsuraScans';
   baseUrl = 'https://asurascans.com';
   private apiUrl = 'https://api.asurascans.com/api';
-  iconUrl = 'https://asurascans.com/favicon.ico';
+  iconUrl = 'https://asurascans.com/images/logo.webp';
 
   private static PER_PAGE_LIMIT = 20;
   private static OLD_FORMAT_MANGA_REGEX = /^\/manga\/(\d+-)?([^/]+)\/?$/;

@@ -1,0 +1,84 @@
+{
+  "spec": 1,
+  "id": "mangapill",
+  "name": "MangaPill",
+  "baseUrl": "https://mangapill.com",
+  "referer": "https://mangapill.com/",
+  "imageHosts": [
+    "https://cdn.readdetectiveconan.com/*"
+  ],
+  "lang": "en",
+  "requestDelayMs": 1000,
+  "search": {
+    "url": "{base}/search?page={page}&q={query}",
+    "slugRegex": "/manga/([^?#]+)",
+    "list": {
+      "rows": ".grid > div:not([class])",
+      "fields": {
+        "title": {
+          "sel": "div.line-clamp-2"
+        },
+        "url": {
+          "sel": "a[href^='/manga/']",
+          "attr": "href"
+        },
+        "thumbnail": {
+          "sel": "img",
+          "attr": "data-src"
+        }
+      }
+    }
+  },
+  "details": {
+    "url": "{base}/manga/{slug}",
+    "fields": {
+      "title": {
+        "sel": "div.container h1.font-bold"
+      },
+      "description": {
+        "sel": "div.container > div:first-child > div:last-child > div:nth-child(2) > p"
+      },
+      "thumbnail": {
+        "sel": "div.container > div:first-child > div:first-child > img",
+        "attr": "data-src"
+      },
+      "status": {
+        "sel": "div.container > div:first-child > div:last-child > div:nth-child(3) > div:nth-child(2) > div",
+        "map": {
+          "Publishing": "Ongoing",
+          "Finished": "Completed"
+        }
+      },
+      "genres": {
+        "sel": "a[href*='genre']"
+      }
+    }
+  },
+  "chapters": {
+    "url": "{base}/manga/{slug}",
+    "chapterSlugRegex": "/chapters/([^?#]+)",
+    "list": {
+      "rows": "#chapters > div > a",
+      "fields": {
+        "title": {},
+        "number": {
+          "regex": "Chapter\\s*([0-9.]+)"
+        },
+        "url": {
+          "attr": "href"
+        }
+      }
+    }
+  },
+  "pages": {
+    "url": "{base}/chapters/{chapterSlug}",
+    "list": {
+      "rows": "picture img",
+      "fields": {
+        "url": {
+          "attr": "data-src"
+        }
+      }
+    }
+  }
+}

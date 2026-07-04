@@ -1,0 +1,46 @@
+name: Release
+
+# Push a version tag (e.g. v0.1.0) to build the extension and publish a
+# GitHub Release with an installable zip attached. Users download the zip,
+# unzip, and Load unpacked — no Node or build step on their side.
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build and package
+        run: npm run package
+
+      - name: Publish release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: release/comick-revive-*.zip
+          generate_release_notes: true
+          body: |
+            ### Install / update
+            1. Download the zip below and unzip it.
+            2. Go to `chrome://extensions`, enable Developer mode.
+            3. **Updating an existing install:** replace your extension folder's contents with the unzipped files, then click Reload. Do NOT Remove and re-add — that wipes your reading data.
+            4. **First install:** click "Load unpacked" and select the unzipped folder.
+
+            Your reading history, library, and settings live in the browser and survive updates. Back them up any time from the dashboard (Settings → Data).

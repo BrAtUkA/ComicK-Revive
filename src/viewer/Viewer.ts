@@ -1,5 +1,6 @@
 import { ComickPageData, ReadingMode, ImageFit, PageInfo, Chapter, SearchResult, GlobalSettings, MangaDetails } from '@/types';
-import { ScrollAnchor, settingsManager, readingStateManager, sourceMappingManager } from '@/core';
+import { ScrollAnchor, settingsManager, readingStateManager, sourceMappingManager, statsManager } from '@/core';
+import { statsTracker } from './StatsTracker';
 import { KeyboardHandler, debounce, setCacheContext, setEvictionCallback, disableEvictionNotifications, updateCacheSettings, clearImageCache, setCachedUrlResolver, bridgeArePagesInCache, bridgeCacheClearChapter, bridgeSetHttpCacheBypass, bridgeSourceDataClearChapterPages, bridgeSourceDataUpdatePageDimensions } from '@/utils';
 import { sourceRegistry } from '@/sources';
 import { sourceMatchModal, chapterPicker, modePicker, settingsPanel, showToast, ToolbarTitleCombobox, LoadingOverlay } from './components';
@@ -80,6 +81,10 @@ export class Viewer {
   // Overlay system
   private overlay: LoadingOverlay = new LoadingOverlay();
   private loadTimeout: ReturnType<typeof setTimeout> | null = null;
+
+  // Last chapter counted as "opened" for stats — guards against reloads and
+  // retries of the same chapter inflating the count
+  private statsCountedChapter: number | null = null;
 
   // Refetch state - set during reloadChapter, cleared after load completes
   private isRefetching: boolean = false;
@@ -171,6 +176,10 @@ export class Viewer {
 
     this.pageData = pageData;
     this.isOpen = true;
+
+    // Start reading-time tracking for this session
+    this.statsCountedChapter = null;
+    statsTracker.start(pageData.slug);
 
     // Load settings
     const settings = await settingsManager.load();
@@ -406,6 +415,9 @@ export class Viewer {
     setCachedUrlResolver(null);
     this.cachedUrlFallback.clear();
     
+    // Flush accumulated reading time (tracker keeps its own slug copy)
+    void statsTracker.stop();
+
     // Dispatch close event so content script can re-inject buttons with updated progress
     window.dispatchEvent(new CustomEvent('comick-revive-close'));
   }
@@ -1154,6 +1166,11 @@ export class Viewer {
 
     this.currentChapter = chapterNum;
 
+    if (this.statsCountedChapter !== chapterNum) {
+      this.statsCountedChapter = chapterNum;
+      void statsManager.recordChapterOpened(this.pageData.slug);
+    }
+
     // Show subtle dark backdrop for smooth transition between chapters.
     // If uncached, this gets upgraded to full spinner via showLoading() after cache check.
     // If refetching, reloadChapter() already showed the full loading overlay.
@@ -1184,9 +1201,22 @@ export class Viewer {
       this.placeholderHeight = sourceInfo.placeholderHeight || 0;
 
       // Get source
-      const source = sourceRegistry.get(this.currentSourceId);
+      let source = sourceRegistry.get(this.currentSourceId);
       if (!source) {
-        throw new Error('Source not found');
+        // User sources register asynchronously; make sure they're loaded
+        // before concluding the source is actually gone
+        await sourceRegistry.loadUserSources();
+        source = sourceRegistry.get(this.currentSourceId);
+      }
+      if (!source) {
+        // The linked source was removed (e.g. a deleted user source). Stop
+        // here instead of proceeding into cached page URLs, which would fire
+        // a doomed image fetch per page and spam the extension error log.
+        this.overlay.showError(
+          `This manga is linked to "${this.currentSourceId}", a source that is no longer installed. Re-add it in the dashboard, or pick a different source.`,
+          () => this.showSourceSearch()
+        );
+        return;
       }
 
       // Load chapters if we don't have them
@@ -2426,8 +2456,7 @@ export class Viewer {
    * Mark current chapter as read
    */
   private async markCurrentChapterAsRead(): Promise<void> {
-    if (!this.pageData) return;
-    await readingStateManager.markChapterRead(this.pageData.slug, this.currentChapter);
+    await this.markChapterAsRead(this.currentChapter);
   }
 
   /**
@@ -2435,7 +2464,13 @@ export class Viewer {
    */
   private async markChapterAsRead(chapterNumber: number): Promise<void> {
     if (!this.pageData) return;
+    // Only newly-read chapters count toward stats — re-opening an already-read
+    // chapter (markReadMode 'onOpen') shouldn't inflate the read count
+    const alreadyRead = await readingStateManager.isChapterRead(this.pageData.slug, chapterNumber);
     await readingStateManager.markChapterRead(this.pageData.slug, chapterNumber);
+    if (!alreadyRead) {
+      void statsManager.recordChapterRead(this.pageData.slug);
+    }
   }
 
   // ═══════════════════════════════════════════════════════════════════════════

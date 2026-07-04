@@ -12,6 +12,68 @@ import { imageCache } from '../core/ImageCache';
 import type { CacheKey, EvictionDetail } from '../core/ImageCache';
 import { sourceDataCache } from '../core/SourceDataCache';
 import { getConfigForUrl } from '../utils/sourceDomains';
+import { refererRuleId, buildRefererRule } from '../shared/refererRules';
+
+/**
+ * Union newly discovered hostnames into the source's persistent Referer
+ * rule. Dynamic rules survive service worker restarts, so this only ever
+ * grows the rule; removing the source deletes the rule by id. A session
+ * cache of covered hosts keeps the per-image-fetch cost at zero once warm.
+ */
+const refererRuleHosts = new Map<number, Set<string>>();
+
+async function ensureRefererRules(sourceId: string, referer: string, hosts: string[]): Promise<void> {
+  if (!sourceId || !referer || !Array.isArray(hosts) || hosts.length === 0) return;
+
+  const id = refererRuleId(sourceId);
+  const cached = refererRuleHosts.get(id);
+  const wanted = hosts.filter((h) => typeof h === 'string' && h && !h.includes('*'));
+  if (wanted.length === 0 || (cached && wanted.every((h) => cached.has(h)))) return;
+
+  const existing = (await chrome.declarativeNetRequest.getDynamicRules()).find((r) => r.id === id);
+  const domains = new Set(existing?.condition.requestDomains ?? []);
+  const before = domains.size;
+  for (const host of wanted) domains.add(host);
+  refererRuleHosts.set(id, domains);
+  if (existing && domains.size === before) return;
+
+  await chrome.declarativeNetRequest.updateDynamicRules({
+    removeRuleIds: [id],
+    addRules: [buildRefererRule(id, referer, [...domains])],
+  });
+  console.log(`[Background] Referer rule for ${sourceId} now covers:`, [...domains].join(', '));
+}
+
+/**
+ * Memoized referer lookup for user sources ('user_source_{id}' keys — same
+ * prefix as STORAGE_KEYS.USER_SOURCE_PREFIX; kept literal here to keep the
+ * background's import graph minimal). Lets image fetches for already-cached
+ * page URLs extend the referer rule even though the source's own
+ * getChapterPages never ran this session.
+ */
+const userSourceRefererCache = new Map<string, string | null>();
+
+chrome.storage.onChanged.addListener((changes, area) => {
+  if (area !== 'local') return;
+  for (const key of Object.keys(changes)) {
+    if (key.startsWith('user_source_')) {
+      userSourceRefererCache.delete(key.slice('user_source_'.length));
+    }
+  }
+});
+
+async function getUserSourceReferer(sourceId: string): Promise<string | null> {
+  const cached = userSourceRefererCache.get(sourceId);
+  if (cached !== undefined) return cached;
+  const key = `user_source_${sourceId}`;
+  const referer = await new Promise<string | null>((resolve) => {
+    chrome.storage.local.get(key, (data) => {
+      resolve((data[key] as { referer?: string } | undefined)?.referer ?? null);
+    });
+  });
+  userSourceRefererCache.set(sourceId, referer);
+  return referer;
+}
 
 // Initialize caches and run cleanup on startup
 Promise.all([
@@ -35,6 +97,9 @@ if (typeof navigator !== 'undefined' && navigator.storage?.persist) {
 // When true, all fetch() calls use cache: 'reload' to bypass browser HTTP disk cache.
 // Toggled by the viewer during chapter refetch.
 let httpCacheBypass = false;
+
+// Toolbar icon opens the popup (action.default_popup in the manifest);
+// the popup handles opening/focusing the dashboard tab itself.
 
 // Message handler
 chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
@@ -188,6 +253,17 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
       .catch((error) => {
         sendResponse({ error: error.message });
       });
+    return true;
+  }
+
+  // Merge runtime-discovered image/CDN hostnames into a user source's
+  // Referer rule. Rotating CDNs (e.g. MangaPill's) can't be enumerated at
+  // install time; DeclarativeSource reports the hosts it actually sees.
+  if (message.type === 'ENSURE_REFERER_RULES') {
+    const { sourceId, referer, hosts } = message.payload ?? {};
+    ensureRefererRules(sourceId, referer, hosts)
+      .then(() => sendResponse({ success: true }))
+      .catch((error) => sendResponse({ error: error.message }));
     return true;
   }
 
@@ -661,7 +737,7 @@ async function handleCachedImageFetch(
  */
 async function fetchAndCacheImage(
   url: string,
-  cacheKey: CacheKey | null
+  cacheKey: CacheKey | null,
 ): Promise<{
   ok: boolean;
   dataUrl?: string;
@@ -670,6 +746,18 @@ async function fetchAndCacheImage(
   error?: string;
 }> {
   const MAX_RETRIES = 2;
+
+  // User-source images may live on CDN domains discovered only at runtime
+  // (or served from cached page URLs whose source never ran this session):
+  // make sure the source's Referer rule covers this host before fetching
+  if (cacheKey?.sourceId) {
+    try {
+      const referer = await getUserSourceReferer(cacheKey.sourceId);
+      if (referer) {
+        await ensureRefererRules(cacheKey.sourceId, referer, [new URL(url).hostname]);
+      }
+    } catch { /* best effort; the fetch may still succeed */ }
+  }
 
   for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
     try {

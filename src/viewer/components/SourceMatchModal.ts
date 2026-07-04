@@ -66,7 +66,7 @@ export class SourceMatchModal {
    * Abort searches on all registered sources.
    */
   private abortAllSources(): void {
-    for (const source of sourceRegistry.getAll()) {
+    for (const source of sourceRegistry.getAll({ includeDisabled: true })) {
       this.getSourceInstanceById(source.id)?.abortSearch();
     }
   }
@@ -85,7 +85,7 @@ export class SourceMatchModal {
    */
   private renderSourceBadges(): string {
     const allSources = this.forcedSourceId
-      ? sourceRegistry.getAll().filter(s => s.id === this.forcedSourceId)
+      ? sourceRegistry.getAll({ includeDisabled: true }).filter(s => s.id === this.forcedSourceId)
       : sourceRegistry.getAll();
     const maxBadges = 3;
     const badges = allSources.slice(0, maxBadges).map(s =>
@@ -291,8 +291,13 @@ export class SourceMatchModal {
    */
   private renderSourceOptions(): string {
     const sources = this.forcedSourceId
-      ? sourceRegistry.getAll().filter(s => s.id === this.forcedSourceId)
+      ? sourceRegistry.getAll({ includeDisabled: true }).filter(s => s.id === this.forcedSourceId)
       : sourceRegistry.getAll();
+    // Keep the currently linked source selectable even when disabled
+    if (this.currentSourceId && !sources.some(s => s.id === this.currentSourceId)) {
+      const current = sourceRegistry.get(this.currentSourceId);
+      if (current) sources.push(current);
+    }
     return sources.map(source => `
       <option value="${source.id}" ${source.id === this.currentSourceId ? 'selected' : ''}>
         ${source.name}

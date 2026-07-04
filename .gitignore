@@ -15,7 +15,8 @@ release/
 docs/
 logs/
 testing/
-shared/
+sharedL/
+local/
 
 # Tooling / binaries
 *.exe

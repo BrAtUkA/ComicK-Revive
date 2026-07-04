@@ -6,15 +6,68 @@
  * to the content script which relays them to the background.
  *
  * Uses window.postMessage() which works across page/content script boundary.
+ *
+ * Transport auto-detection: when this module runs inside an extension page
+ * (dashboard, popup — chrome.runtime + chrome.storage available), every
+ * bridge call short-circuits to the chrome APIs directly instead of the
+ * postMessage relay. Callers never need to know which transport is active,
+ * which is what lets viewer code run unchanged inside extension pages.
  */
 
 import type { MangaDetails, EvictionUnit, EvictionPriority } from '@/types';
 
+/**
+ * True when we can talk to chrome APIs directly (extension page or content
+ * script context). False in page context (viewer on comick.dev), where
+ * `chrome` exists but `chrome.runtime.id` does not.
+ */
+function hasDirectChromeAccess(): boolean {
+  try {
+    return typeof chrome !== 'undefined' &&
+           !!chrome.runtime?.id &&
+           typeof chrome.runtime.sendMessage === 'function' &&
+           !!chrome.storage?.local;
+  } catch {
+    return false;
+  }
+}
+
+const DIRECT_TRANSPORT = hasDirectChromeAccess();
+
+/**
+ * Direct transport: mirrors the content script's relay behavior
+ * (storage actions handled locally, everything else to background).
+ */
+async function sendDirectMessage(type: string, payload: any): Promise<any> {
+  switch (type) {
+    case 'STORAGE_GET':
+      return new Promise((resolve) => {
+        chrome.storage.local.get(payload.key, (data) => {
+          resolve(data[payload.key] ?? payload.defaultValue);
+        });
+      });
+    case 'STORAGE_SET':
+      return new Promise((resolve) => {
+        chrome.storage.local.set({ [payload.key]: payload.value }, () => resolve(true));
+      });
+    case 'STORAGE_REMOVE':
+      return new Promise((resolve) => {
+        chrome.storage.local.remove(payload.key, () => resolve(true));
+      });
+    case 'STORAGE_GET_ALL':
+      return new Promise((resolve) => {
+        chrome.storage.local.get(null, (data) => resolve(data));
+      });
+    default:
+      return await chrome.runtime.sendMessage({ type, payload });
+  }
+}
+
 let messageId = 0;
 const pendingMessages = new Map<number, { resolve: (value: any) => void; reject: (error: any) => void }>();
 
-// Listen for responses from content script
-if (typeof window !== 'undefined') {
+// Listen for responses from content script (postMessage transport only)
+if (typeof window !== 'undefined' && !DIRECT_TRANSPORT) {
   window.addEventListener('message', (event: MessageEvent) => {
     // Only accept messages from same window
     if (event.source !== window) return;
@@ -63,8 +116,14 @@ function sendBridgeMessageOnce(type: string, payload: any, timeoutMs: number): P
 /**
  * Send a message to the content script via the bridge.
  * Retries once on failure to handle transient service worker restarts.
+ * In extension pages, skips the relay and talks to chrome APIs directly
+ * (sendMessage from an extension page wakes the service worker itself,
+ * so no retry dance is needed).
  */
 async function sendBridgeMessage(type: string, payload: any): Promise<any> {
+  if (DIRECT_TRANSPORT) {
+    return await sendDirectMessage(type, payload);
+  }
   try {
     return await sendBridgeMessageOnce(type, payload, 60000);
   } catch (firstError) {
@@ -355,6 +414,19 @@ export async function bridgeCacheClearChapter(
 ): Promise<number> {
   const result = await sendBridgeMessage('CACHE_CLEAR_CHAPTER', { sourceId, mangaSlug, chapterSlug });
   return result.removed || 0;
+}
+
+/**
+ * Merge runtime-discovered image/CDN hostnames into a user source's Referer
+ * rule (rotating CDNs can't be enumerated at install time). Awaited before
+ * the discovered URLs are fetched so the rule is live in time.
+ */
+export async function bridgeEnsureRefererRules(
+  sourceId: string,
+  referer: string,
+  hosts: string[]
+): Promise<void> {
+  await sendBridgeMessage('ENSURE_REFERER_RULES', { sourceId, referer, hosts });
 }
 
 /**

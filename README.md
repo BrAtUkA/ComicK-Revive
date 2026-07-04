@@ -11,7 +11,7 @@
   <img alt="TypeScript" src="https://img.shields.io/badge/TypeScript-5.x-3178C6?logo=typescript&logoColor=white">
   <img alt="Vite" src="https://img.shields.io/badge/Vite-5-646CFF?logo=vite&logoColor=white">
   <img alt="No framework" src="https://img.shields.io/badge/UI-vanilla_DOM-555">
-  <img alt="Version" src="https://img.shields.io/badge/version-0.1.0--beta-orange">
+  <img alt="Version" src="https://img.shields.io/badge/version-0.2.0-orange">
   <img alt="License" src="https://img.shields.io/badge/License-PolyForm_Noncommercial-blue">
 </p>
 
@@ -27,7 +27,7 @@
 <br/>
 
 > [!WARNING]
-> **Early beta (0.1.0).** The core reading experience is solid, but a few things are still
+> **Beta (0.2.0).** The core reading experience is solid, but a few things are still
 > rough or experimental. Read [Known issues](#%EF%B8%8F-known-issues) first. It runs on
 > Chromium browsers only and is loaded unpacked, since it isn't on the Chrome Web Store.
 
@@ -41,9 +41,20 @@
 - Keeps your exact spot by anchoring to an image rather than a scroll position, so resizing, zooming, or switching modes never loses your place.
 
 #### 🔌 Sources
-- Reads from **AsuraScans, MangaDex, and MangaKatana**, with more planned.
-- Link a ComicK title to a source once and it's remembered. A fuzzy search helps you find the right match.
-- Unscrambles AsuraScans' shuffled image tiles on its own.
+- Reads from **AsuraScans, MangaDex, and MangaKatana** out of the box.
+- **Add your own sources without touching code.** A source is a small JSON "recipe" the extension runs at load time. Import one by paste, file, or URL, and there's a one-click prompt that lets an AI write the recipe for you, plus a built-in test tool that checks it against the live site.
+- Set source **priority** by dragging, enable or disable any source, and point a source at a new domain when a site moves.
+- Link a ComicK title to a source once and it's remembered. A fuzzy search helps you find the right match. AsuraScans' shuffled image tiles are unscrambled automatically.
+
+#### 🖥️ Dashboard & popup
+- A full **dashboard** page (click the toolbar icon → *Open dashboard*) with your library, a cross-source **search** you can read from directly (no ComicK page needed), stats, settings, and source management.
+- A **popup** on the toolbar icon with your recently read titles and quick stats, one click back into a chapter.
+- Search any of your sources and start reading right inside the dashboard.
+
+#### 📊 Stats, backup & updates
+- **Reading stats:** chapters read, active reading time, daily activity chart, and streaks.
+- **Backup and restore** your reading history, library, sources, and settings to a single file, with merge or replace on import. Cached images are left out to keep it small.
+- The dashboard **checks for new releases** and tells you when an update is out.
 
 #### 📂 Library & offline
 - Tracks read/unread per source and per chapter, and the *Continue* button picks up at the exact page and scroll position where you left off, not just the start of the chapter.
@@ -63,9 +74,10 @@
 | **AsuraScans** | ✅ Default | JSON API plus Astro pages. Handles rotating slugs and scrambled tiles. |
 | **MangaDex** | ✅ | Official REST API and the MD@Home image CDN (English). |
 | **MangaKatana** | ✅ | HTML scraping. Sensitive to Cloudflare, so retry if a search comes back empty. |
-| *More* | 🔜 Planned | Additional sources are on the roadmap. |
+| *Your own* | ➕ Add-your-own | Import a JSON source recipe from the dashboard, no rebuild needed. |
+| *More built-in* | 🔜 Planned | Additional bundled sources are on the roadmap. |
 
-> Want another source sooner? Adding one is a small, self-contained change. See [Adding a new source](#-adding-a-new-source).
+> Want another source now? Open the dashboard → **Sources → Add source** and import a recipe (an AI can write it for you). For a bundled TypeScript source, see [Adding a new source](#-adding-a-new-source).
 
 <br/>
 
@@ -75,7 +87,7 @@ ComicK Revive is a Manifest V3 extension for Chromium browsers (Chrome, Edge, Br
 
 ### Pre-built (easiest)
 
-1. Grab `comick-revive-v0.1.0.zip` from the [**Releases**](../../releases) page.
+1. Grab `comick-revive-v0.2.0.zip` from the [**Releases**](../../releases) page.
 2. Unzip it somewhere.
 3. Open `chrome://extensions` and turn on **Developer mode** (top right).
 4. Click **Load unpacked** and pick the unzipped folder.
@@ -246,7 +258,7 @@ The Kotlin source implementations in the Tachiyomi / keiyoushi ecosystem are a g
 
 ## ⚠️ Known issues
 
-This is a `0.1.0` beta, so expect rough edges. Sources can also break when a site changes its markup. If a title stops loading, try the chapter **refresh** button or re-link the source.
+This is a `0.2.0` beta, so expect rough edges. Sources can also break when a site changes its markup. If a title stops loading, try the chapter **refresh** button or re-link the source.
 
 - **Continuous reading** (scrolling straight from one chapter into the next) is **experimental and off by default**. It can break when you resume a session, so turn it on in settings only if you want to try it.
 - The **page counter** sometimes freezes during fast navigation.

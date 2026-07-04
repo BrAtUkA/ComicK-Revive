@@ -665,6 +665,11 @@ export class SettingsPanel {
    */
   private renderSourceOptions(): string {
     const sources = sourceRegistry.getAll();
+    // Keep the currently linked source selectable even when disabled
+    if (this.currentSourceId && !sources.some(s => s.id === this.currentSourceId)) {
+      const current = sourceRegistry.get(this.currentSourceId);
+      if (current) sources.push(current);
+    }
     return sources.map(source => `
       <option value="${source.id}" ${source.id === this.currentSourceId ? 'selected' : ''}>
         ${source.name}

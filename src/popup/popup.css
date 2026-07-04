@@ -1,0 +1,171 @@
+/* ComicK Revive — Popup
+   The body carries both .crd (shared design tokens from the dashboard) and
+   .crp (popup layout). Everything here is scoped under .crp because this
+   stylesheet ships in the shared CSS bundle. */
+
+.crp {
+  width: 384px;
+  min-height: 0;
+  background:
+    radial-gradient(340px 200px at 85% -40px, rgba(99, 102, 241, 0.10), transparent 65%),
+    var(--crd-bg);
+}
+
+.crp ::-webkit-scrollbar { width: 6px; }
+.crp ::-webkit-scrollbar-thumb { border: none; }
+
+#crp-app { display: flex; flex-direction: column; }
+
+/* ═══════ Header ═══════ */
+
+.crp-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 16px 12px;
+  border-bottom: 1px solid var(--crd-line);
+}
+.crp-head .crd-brand-mark { width: 28px; height: 28px; border-radius: 8px; }
+.crp-head .crd-brand-mark svg { width: 15px; height: 15px; }
+.crp-title-text {
+  font-weight: 700;
+  font-size: 13.5px;
+  letter-spacing: -0.01em;
+  flex: 1;
+}
+.crp-icon-btn {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  color: var(--crd-ink-2);
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+.crp-icon-btn:hover { background: var(--crd-accent-dim); color: var(--crd-ink); border-color: rgba(99, 102, 241, 0.3); }
+.crp-icon-btn svg { width: 16px; height: 16px; }
+
+/* ═══════ Mini stats ═══════ */
+
+.crp-stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 8px;
+  padding: 12px 16px;
+}
+.crp-stat {
+  background: var(--crd-panel);
+  border: 1px solid var(--crd-line);
+  border-radius: 9px;
+  padding: 8px 10px 7px;
+  text-align: center;
+}
+.crp-stat b {
+  display: block;
+  font-family: var(--crd-mono);
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--crd-ink);
+}
+.crp-stat span {
+  font-family: var(--crd-mono);
+  font-size: 8.5px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--crd-ink-3);
+}
+
+/* ═══════ Continue reading list ═══════ */
+
+.crp-section {
+  font-family: var(--crd-mono);
+  font-size: 9.5px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--crd-ink-3);
+  padding: 4px 16px 6px;
+}
+
+.crp-list {
+  max-height: 336px;
+  overflow-y: auto;
+  padding: 0 8px;
+}
+
+.crp-row {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 7px 8px;
+  border-radius: 10px;
+  cursor: pointer;
+  border: none;
+  background: transparent;
+  width: 100%;
+  text-align: left;
+  font: inherit;
+  color: inherit;
+  transition: background 0.13s ease;
+}
+.crp-row:hover { background: rgba(255, 255, 255, 0.045); }
+
+.crp-thumb {
+  width: 38px;
+  height: 54px;
+  border-radius: 6px;
+  overflow: hidden;
+  background: linear-gradient(160deg, #191922, #101014);
+  border: 1px solid var(--crd-line);
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  font-family: var(--crd-mono);
+  font-size: 16px;
+  font-weight: 600;
+  color: rgba(129, 140, 248, 0.3);
+}
+.crp-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+.crp-row-body { flex: 1; min-width: 0; }
+.crp-row-title {
+  font-size: 12.5px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.crp-row-meta {
+  font-family: var(--crd-mono);
+  font-size: 10px;
+  color: var(--crd-ink-3);
+  margin-top: 2px;
+}
+.crp-row-meta em { font-style: normal; color: var(--crd-accent-2); }
+
+.crp-row-chevron { color: var(--crd-ink-3); flex-shrink: 0; opacity: 0; transition: opacity 0.13s ease; }
+.crp-row:hover .crp-row-chevron { opacity: 1; }
+.crp-row-chevron svg { width: 14px; height: 14px; display: block; }
+
+.crp-empty {
+  padding: 28px 20px;
+  text-align: center;
+  color: var(--crd-ink-3);
+  font-size: 12px;
+}
+.crp-empty b { display: block; color: var(--crd-ink-2); font-size: 13px; margin-bottom: 4px; }
+
+/* ═══════ Footer ═══════ */
+
+.crp-foot {
+  padding: 10px 16px 14px;
+  border-top: 1px solid var(--crd-line);
+  margin-top: 6px;
+}
+.crp-foot .crd-btn {
+  width: 100%;
+  justify-content: center;
+  padding: 8px 14px;
+}

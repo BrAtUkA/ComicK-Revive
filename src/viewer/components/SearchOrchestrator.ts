@@ -346,8 +346,13 @@ export class SearchOrchestrator {
     this.isSearching = true;
     this.failedTitles = new Map();
 
+    // Pick up priority/enablement changes made in the dashboard while this
+    // tab has been open. Search-all runs enabled sources in priority order;
+    // a forced re-search targets its source even when disabled (explicit
+    // user intent on an already-linked source).
+    await sourceRegistry.refreshConfig();
     const allSources = this.host.forcedSourceId
-      ? sourceRegistry.getAll().filter(s => s.id === this.host.forcedSourceId)
+      ? sourceRegistry.getAll({ includeDisabled: true }).filter(s => s.id === this.host.forcedSourceId)
       : sourceRegistry.getAll();
     const sourceBadgesHtml = this.host.renderSourceBadges();
 

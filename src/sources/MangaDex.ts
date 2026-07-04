@@ -73,6 +73,7 @@ export class MangaDex implements MangaSource {
   id = 'mangadex';
   name = 'MangaDex';
   baseUrl = API_URL;
+  iconUrl = 'https://mangadex.org/img/brand/mangadex-logo.svg';
 
   /** MD@Home page URLs contain ephemeral CDN node addresses — skip caching the URL list */
   skipPageCache = true;

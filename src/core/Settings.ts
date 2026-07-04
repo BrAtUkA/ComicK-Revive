@@ -9,13 +9,13 @@ export class SettingsManager {
   private listeners: Set<(settings: GlobalSettings) => void> = new Set();
 
   /**
-   * Load settings from storage
+   * Load settings from storage.
+   * Always re-reads storage: settings can be changed from another context
+   * (dashboard, popup) while this one keeps its module-level singleton alive,
+   * so serving the in-memory copy here would hand out stale values. The
+   * in-memory cache exists only so get() can stay synchronous.
    */
   async load(): Promise<GlobalSettings> {
-    if (this.settings) {
-      return { ...this.settings };
-    }
-
     this.settings = await storage.get<GlobalSettings>(
       STORAGE_KEYS.GLOBAL_SETTINGS,
       DEFAULT_SETTINGS
