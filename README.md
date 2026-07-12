@@ -16,11 +16,18 @@
 </p>
 
 <p align="center">
+  <a href="#-installation"><img alt="Install" src="https://img.shields.io/badge/Install-Get_the_latest_release-6366f1?style=for-the-badge&logo=googlechrome&logoColor=white"></a>
+  &nbsp;
+  <a href="#-adding-a-new-source"><img alt="Add a source" src="https://img.shields.io/badge/Add_a_source-Catalog_%26_guide-22c55e?style=for-the-badge&logo=json&logoColor=white"></a>
+</p>
+
+<p align="center">
   <a href="#-news">News</a> &nbsp;·&nbsp;
   <a href="#-features">Features</a> &nbsp;·&nbsp;
   <a href="#-supported-sources">Sources</a> &nbsp;·&nbsp;
-  <a href="#-installation">Install</a> &nbsp;·&nbsp;
+  <a href="#-installation"><b>Install</b></a> &nbsp;·&nbsp;
   <a href="#-usage">Usage</a> &nbsp;·&nbsp;
+  <a href="#-adding-a-new-source"><b>Add a source</b></a> &nbsp;·&nbsp;
   <a href="#%EF%B8%8F-architecture">Architecture</a> &nbsp;·&nbsp;
   <a href="#%EF%B8%8F-known-issues">Known issues</a>
 </p>
@@ -108,7 +115,7 @@ ComicK Revive is a Manifest V3 extension for Chromium browsers (Chrome, Edge, Br
 2. Unzip it somewhere.
 3. Open `chrome://extensions` and turn on **Developer mode** (top right).
 4. Click **Load unpacked** and pick the unzipped folder.
-5. Head to [comick.dev](https://comick.dev), open a manga, and hit the **Read** button.
+5. Head to [comick.dev](https://comick.dev), open a manga, and hit the **Read** button. Or skip ComicK entirely: click the toolbar icon → **Open dashboard** and read from there.
 
 ### Build from source
 
@@ -135,10 +142,20 @@ Load the `dist/` folder with **Load unpacked**, same as above. Reload the extens
 
 ## 🎮 Usage
 
-1. Open a manga or chapter on **comick.dev**.
-2. Click **Start Reading**, or **Continue Ch. N** if you've read some already.
-3. The first time you open a title, pick the matching manga on a source. That choice is saved.
-4. Read. Position, mode, and progress all save themselves.
+### First run: pick your sources
+
+AsuraScans, MangaDex, and MangaKatana work out of the box. For more, click the toolbar icon → **Open dashboard** → **Sources → Browse catalog** and switch on the sites you want; each asks for access to its own site only. **Test all** shows you what works from your network before you commit to anything.
+
+### Reading on comick.dev
+
+1. Open a manga or chapter and click **Start Reading**, or **Continue Ch. N** if you've read some already.
+2. The first time you open a title, pick the matching manga on a source. That choice is saved.
+3. Read. Position, mode, and progress all save themselves.
+
+### Reading standalone (no ComicK page needed)
+
+1. In the dashboard, **Search** for a title across all your sources and read it right there.
+2. Everything you read lands in your **Library** and **History**; the **Continue** buttons (and the toolbar popup) drop you back at the exact page you left.
 
 ### Keyboard shortcuts
 
@@ -155,7 +172,7 @@ Load the `dist/` folder with **Load unpacked**, same as above. Reload the extens
 
 ## 🏗️ Architecture
 
-The extension lives in three separate worlds that can't see each other's globals, so code written for one will break in another. A small message bridge connects them, and every outside request goes through the background worker to get around CORS.
+The extension lives in separate worlds that can't see each other's globals, so code written for one will break in another. A small message bridge connects them, and every outside request goes through the background worker to get around CORS.
 
 ```mermaid
 flowchart LR
@@ -166,6 +183,7 @@ flowchart LR
 
     subgraph EXT["Extension"]
         CS["Content Script<br/>chrome.* + ComicK DOM"]
+        DASH["Dashboard & popup<br/>full DOM + chrome.*"]
         BG["Background Worker<br/>CORS proxy + IndexedDB caches"]
     end
 
@@ -173,21 +191,25 @@ flowchart LR
         AS["AsuraScans"]
         MD["MangaDex"]
         MK["MangaKatana"]
+        CAT["70+ catalog sites"]
     end
 
     BTN -->|click, injects viewer| VIEW
     VIEW <-->|"window.postMessage (bridge.ts)"| CS
     CS <-->|chrome.runtime.sendMessage| BG
-    BG -->|"fetch + source headers / DNR"| AS & MD & MK
+    DASH <-->|chrome.runtime.sendMessage| BG
+    BG -->|"fetch + source headers / DNR"| AS & MD & MK & CAT
     BG <--> IDB[("IndexedDB<br/>images + metadata")]
 
     style VIEW fill:#3b0764,color:#efe1ff,stroke:#a855f7
     style CS fill:#1e3a5f,color:#cfe3ff,stroke:#3b82f6
+    style DASH fill:#3b0764,color:#efe1ff,stroke:#a855f7
     style BG fill:#14532d,color:#dcfce7,stroke:#22c55e
     style IDB fill:#14532d,color:#dcfce7,stroke:#22c55e
     style AS fill:#7c2d12,color:#fde6d5,stroke:#ea580c
     style MD fill:#7c2d12,color:#fde6d5,stroke:#ea580c
     style MK fill:#7c2d12,color:#fde6d5,stroke:#ea580c
+    style CAT fill:#7c2d12,color:#fde6d5,stroke:#ea580c
 ```
 
 | Context | Entry | Has `chrome.*` | Has DOM | Role |
@@ -195,6 +217,7 @@ flowchart LR
 | **Content script** | `src/content/index.ts` | ✅ | ComicK DOM | Detect pages, inject buttons, relay the bridge |
 | **Background worker** | `src/background/index.ts` | ✅ | ❌ | CORS proxy, IndexedDB image and data caches |
 | **Viewer** | `src/viewer/index.ts` | ❌ | ✅ | The reader overlay; goes through the bridge for everything |
+| **Dashboard & popup** | `src/dashboard/`, `src/popup/` | ✅ | ✅ | The standalone app: library, history, search, catalog, stats, settings |
 
 ### How a chapter loads
 
@@ -231,7 +254,7 @@ flowchart TD
 |-------|-----------|
 | Platform | Chrome Manifest V3 (service worker, content script, declarativeNetRequest) |
 | Language | TypeScript 5 |
-| Build | [Vite](https://vitejs.dev) 5, three self-contained entry points with no shared chunks |
+| Build | [Vite](https://vitejs.dev) 5, five self-contained entry points with no shared chunks |
 | UI | Vanilla DOM, no framework. Classes with co-located CSS |
 | Storage | `chrome.storage.local` plus IndexedDB (image blobs and source metadata) |
 | Icons | [Lucide](https://lucide.dev) |
