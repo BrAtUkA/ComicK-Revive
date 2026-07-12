@@ -12,8 +12,13 @@ export interface DashboardTab {
   icon: string;  // inline SVG markup
   /** Pin to the bottom group (e.g. Settings). */
   bottom?: boolean;
-  /** Render into host. Called every time the tab becomes active. */
-  mount(host: HTMLElement): Promise<void> | void;
+  /**
+   * Render into host. Called every time the tab becomes active AND whenever
+   * the sub-route changes while it stays active. `sub` is everything after
+   * the first `/` in the hash (URI-decoded), e.g. `#library/some-slug`
+   * mounts the library tab with sub "some-slug".
+   */
+  mount(host: HTMLElement, sub?: string): Promise<void> | void;
   unmount?(): void;
 }
 
@@ -40,7 +45,7 @@ export class Dashboard {
     root.classList.toggle('collapsed', collapsed);
     root.innerHTML = `
       <aside class="crd-side">
-        <div class="crd-brand">
+        <div class="crd-brand" title="Toggle sidebar">
           <div class="crd-brand-mark">
             <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
               <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20V4a1 1 0 0 0-1-1H6.5A2.5 2.5 0 0 0 4 5.5v14z"/>
@@ -53,10 +58,10 @@ export class Dashboard {
         <div class="crd-side-bottom">
           <nav class="crd-nav" id="crd-nav-bottom"></nav>
           <div class="crd-side-foot">
-            <span class="crd-side-version">v${version}</span>
             <button class="crd-icon-btn crd-side-collapse" id="crd-collapse" title="${collapsed ? 'Expand sidebar' : 'Collapse sidebar'}">
               ${collapsed ? EXPAND_SVG : COLLAPSE_SVG}
             </button>
+            <span class="crd-side-version">v${version}</span>
           </div>
         </div>
       </aside>
@@ -76,6 +81,7 @@ export class Dashboard {
     }
 
     root.querySelector('#crd-collapse')?.addEventListener('click', () => this.toggleCollapse());
+    root.querySelector('.crd-brand')?.addEventListener('click', () => this.toggleCollapse());
 
     this.main = root.querySelector('#crd-main');
     window.addEventListener('hashchange', () => this.route());
@@ -102,10 +108,17 @@ export class Dashboard {
     }
   }
 
+  private currentPath: string | null = null;
+
   private route(): void {
-    const id = window.location.hash.replace('#', '') || this.tabs[0].id;
+    const path = window.location.hash.replace('#', '') || this.tabs[0].id;
+    const slash = path.indexOf('/');
+    const id = slash === -1 ? path : path.slice(0, slash);
+    const sub = slash === -1 ? undefined : decodeURIComponent(path.slice(slash + 1));
+
     const tab = this.tabs.find((t) => t.id === id) ?? this.tabs[0];
-    if (tab === this.active) return;
+    if (tab === this.active && path === this.currentPath) return;
+    this.currentPath = path;
 
     this.active?.unmount?.();
     this.active = tab;
@@ -116,7 +129,8 @@ export class Dashboard {
 
     if (this.main) {
       this.main.innerHTML = '';
-      void tab.mount(this.main);
+      window.scrollTo(0, 0);
+      void tab.mount(this.main, sub);
     }
   }
 }

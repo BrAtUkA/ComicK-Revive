@@ -7,12 +7,26 @@
  * via the appropriate channel.
  */
 
+export interface FetchInit {
+  method?: 'GET' | 'POST';
+  /** String body only (form-urlencoded etc.); must survive message serialization */
+  body?: string;
+  /** 'include' sends the user's cookies for the target site (host permission
+   *  required). Lets sources behind bot walls reuse a clearance cookie the
+   *  user earned by visiting the site in a normal tab. */
+  credentials?: 'include' | 'omit' | 'same-origin';
+  /** 'reload' bypasses Chrome's HTTP cache — required for probes that must
+   *  observe the live site (a cached page hides an active bot wall). */
+  cache?: 'reload' | 'no-store' | 'default';
+}
+
 /**
  * Fetch a URL through the background service worker to bypass CORS.
  * Auto-detects whether we're in extension context (chrome API) or
- * page context (bridge relay).
+ * page context (bridge relay). The background spreads options into
+ * fetch(), so method/body pass through.
  */
-export async function fetchWithCors(url: string, headers: HeadersInit = {}): Promise<Response> {
+export async function fetchWithCors(url: string, headers: HeadersInit = {}, init: FetchInit = {}): Promise<Response> {
   const hasChrome = typeof chrome !== 'undefined' &&
                     typeof chrome.runtime !== 'undefined' &&
                     typeof chrome.runtime.sendMessage === 'function';
@@ -23,7 +37,7 @@ export async function fetchWithCors(url: string, headers: HeadersInit = {}): Pro
         {
           type: 'FETCH',
           url,
-          options: { headers },
+          options: { headers, ...init },
         },
         (response) => {
           if (chrome.runtime.lastError) {
@@ -54,7 +68,7 @@ export async function fetchWithCors(url: string, headers: HeadersInit = {}): Pro
       type: 'FETCH',
       payload: {
         url,
-        options: { headers },
+        options: { headers, ...init },
       },
     });
 

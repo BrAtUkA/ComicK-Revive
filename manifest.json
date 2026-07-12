@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "ComicK Revive",
-  "version": "0.2.0",
-  "version_name": "0.2.0",
+  "version": "0.3.0",
+  "version_name": "0.3.0",
   "description": "Read manga directly on ComicK from various sources",
   "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAuA05e5o4D96BV/X7wE1LsqGTbm1v5FpACVviLGzAhqJYfs1wrHx0CAxx2dx0CF8rOVaQ5her+vMblkJ/0ic9rhaW8oHpm9ij3UvbVgI4onVv7tMGxq5820crnn+WoZfp6mDspMDBmd9xOJmyCxbrksWC6QxRLnXXuypZTMq//8Qhap4uFPrmKaBERs/7+ODNl3tRadpWWnGZ7vksx5rgA62pqTExGl77Ls/nTJ+25caC5Pxs6RX5TSSZ0g9JcWKVhbruygXttnVJ3kkZhRmAWOhKO3TF3WXo59mT3j/tCjbUbhxvtB0IIYsA/h+Y6kxCd6jaQp3hUxzupS7GtSdqWQIDAQAB",
   "icons": {
@@ -30,6 +30,11 @@
   "declarative_net_request": {
     "rule_resources": [
       {
+        "id": "cf_passthrough",
+        "enabled": true,
+        "path": "rules/cf-passthrough.json"
+      },
+      {
         "id": "mangadex_origin",
         "enabled": true,
         "path": "rules/mangadex.json"
@@ -41,6 +46,9 @@
       }
     ]
   },
+  "optional_permissions": [
+    "cookies"
+  ],
   "optional_host_permissions": [
     "https://*/*",
     "http://*/*"

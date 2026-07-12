@@ -220,5 +220,8 @@ export const STORAGE_KEYS = {
   STATS_DAILY_PREFIX: 'stats_daily_',
   STATS_TOTALS: 'stats_totals',
   SOURCE_CONFIG: 'source_config',
+  SOURCE_CATALOG: 'source_catalog',
   USER_SOURCE_PREFIX: 'user_source_',
+  LIBRARY_META: 'library_meta',
+  READING_HISTORY: 'reading_history',
 } as const;

@@ -8,6 +8,8 @@ const X_SVG = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke
 
 export interface ModalOptions {
   large?: boolean;
+  /** Near-full-height modal for content-heavy views (e.g. search details) */
+  tall?: boolean;
   headerActions?: string;
 }
 
@@ -19,7 +21,7 @@ export function buildModal(
   const overlay = document.createElement('div');
   overlay.className = 'crd-modal-overlay';
   overlay.innerHTML = `
-    <div class="crd-modal${options.large ? ' large' : ''}">
+    <div class="crd-modal${options.large ? ' large' : ''}${options.tall ? ' tall' : ''}">
       <div class="crd-modal-head">
         <h3>${title}</h3>
         <span class="crd-modal-head-actions">${options.headerActions ?? ''}<button class="crd-icon-btn crd-modal-x" title="Close">${X_SVG}</button></span>

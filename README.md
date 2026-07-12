@@ -1,9 +1,9 @@
 <h1 align="center">ComicK Revive</h1>
 
 <p align="center">
-  An in-page manga reader for <a href="https://comick.dev">ComicK</a>.<br/>
-  ComicK dropped its built-in reader, so this puts one back, pulling chapters from<br/>
-  outside scan sources with caching, position memory, and three reading modes.
+  A full manga reading app that lives in your browser.<br/>
+  Born when <a href="https://comick.dev">ComicK</a> dropped its built-in reader, it now reads from 70+ sources<br/>
+  with its own library, history, and stats, on comick.dev pages or fully standalone.
 </p>
 
 <p align="center">
@@ -11,11 +11,12 @@
   <img alt="TypeScript" src="https://img.shields.io/badge/TypeScript-5.x-3178C6?logo=typescript&logoColor=white">
   <img alt="Vite" src="https://img.shields.io/badge/Vite-5-646CFF?logo=vite&logoColor=white">
   <img alt="No framework" src="https://img.shields.io/badge/UI-vanilla_DOM-555">
-  <img alt="Version" src="https://img.shields.io/badge/version-0.2.0-orange">
+  <img alt="Version" src="https://img.shields.io/badge/version-0.3.0-orange">
   <img alt="License" src="https://img.shields.io/badge/License-PolyForm_Noncommercial-blue">
 </p>
 
 <p align="center">
+  <a href="#-news">News</a> &nbsp;·&nbsp;
   <a href="#-features">Features</a> &nbsp;·&nbsp;
   <a href="#-supported-sources">Sources</a> &nbsp;·&nbsp;
   <a href="#-installation">Install</a> &nbsp;·&nbsp;
@@ -27,9 +28,19 @@
 <br/>
 
 > [!WARNING]
-> **Beta (0.2.0).** The core reading experience is solid, but a few things are still
+> **Beta (0.3.0).** The core reading experience is solid, but a few things are still
 > rough or experimental. Read [Known issues](#%EF%B8%8F-known-issues) first. It runs on
 > Chromium browsers only and is loaded unpacked, since it isn't on the Chrome Web Store.
+
+<br/>
+
+## 📰 News
+
+- **[v0.3.0](../../releases/tag/v0.3.0)** · *2026-07-12* · **The sources update.** A built-in catalog of **70+ sources** you can switch on in one click, each with its real logo, each asking for access to its own site only. An **18+ toggle** reveals the adult catalog when you want it. **Test all** checks every source from your own connection and gives you a copyable report. Plus a proper **Library** with per-manga detail pages, a **History** tab, richer **Stats**, and a much smoother multi-source search.
+- **[v0.2.0](../../releases/tag/v0.2.0)** · *2026-07-04* · **From reader to app.** A full dashboard (library, cross-source search you can read from, stats, settings), a toolbar popup, add-your-own JSON sources with an AI prompt and a live test tool, drag-to-prioritize sources, one-file backup **export/import**, and automatic update checks.
+- **[v0.1.0](../../releases/tag/v0.1.0)** · *2026-06-26* · **First public beta.** The in-page reader for comick.dev: AsuraScans, MangaDex, and MangaKatana, offline caching, three reading modes, and exact-position resume.
+
+<sub>Full notes for every version live on the [**Releases**](../../releases) page.</sub>
 
 <br/>
 
@@ -42,12 +53,13 @@
 
 #### 🔌 Sources
 - Reads from **AsuraScans, MangaDex, and MangaKatana** out of the box.
+- A built-in **source catalog with 70+ sites** (Madara-engine scanlators and aggregators, each with its real icon). Enabling one asks for permission to that site only; the extension never gets blanket host access. A one-click **Test all** checks every catalog site end to end (search → chapters → pages → image) with a live pass/fail bar and a copyable report.
 - **Add your own sources without touching code.** A source is a small JSON "recipe" the extension runs at load time. Import one by paste, file, or URL, and there's a one-click prompt that lets an AI write the recipe for you, plus a built-in test tool that checks it against the live site.
 - Set source **priority** by dragging, enable or disable any source, and point a source at a new domain when a site moves.
 - Link a ComicK title to a source once and it's remembered. A fuzzy search helps you find the right match. AsuraScans' shuffled image tiles are unscrambled automatically.
 
 #### 🖥️ Dashboard & popup
-- A full **dashboard** page (click the toolbar icon → *Open dashboard*) with your library, a cross-source **search** you can read from directly (no ComicK page needed), stats, settings, and source management.
+- A full **dashboard** page (click the toolbar icon → *Open dashboard*) with your library, reading history, a cross-source **search** you can read from directly (no ComicK page needed), stats, settings, and source management.
 - A **popup** on the toolbar icon with your recently read titles and quick stats, one click back into a chapter.
 - Search any of your sources and start reading right inside the dashboard.
 
@@ -74,10 +86,10 @@
 | **AsuraScans** | ✅ Default | JSON API plus Astro pages. Handles rotating slugs and scrambled tiles. |
 | **MangaDex** | ✅ | Official REST API and the MD@Home image CDN (English). |
 | **MangaKatana** | ✅ | HTML scraping. Sensitive to Cloudflare, so retry if a search comes back empty. |
+| **Catalog (70+ sites)** | ✅ Opt-in | Dashboard → Sources → *Browse catalog*. Madara-engine sites, validated end to end; each one asks for its own site permission when you enable it. 18+ entries stay hidden behind a toggle. |
 | *Your own* | ➕ Add-your-own | Import a JSON source recipe from the dashboard, no rebuild needed. |
-| *More built-in* | 🔜 Planned | Additional bundled sources are on the roadmap. |
 
-> Want another source now? Open the dashboard → **Sources → Add source** and import a recipe (an AI can write it for you). For a bundled TypeScript source, see [Adding a new source](#-adding-a-new-source).
+> A few catalog sites sit behind bot checks or regional blocks; their status chip says so honestly instead of pretending. Availability can differ by country and network; the built-in **Test all** shows you exactly what works from yours. For a bundled TypeScript source, see [Adding a new source](#-adding-a-new-source).
 
 <br/>
 
@@ -87,7 +99,7 @@ ComicK Revive is a Manifest V3 extension for Chromium browsers (Chrome, Edge, Br
 
 ### Pre-built (easiest)
 
-1. Grab `comick-revive-v0.2.0.zip` from the [**Releases**](../../releases) page.
+1. Grab `comick-revive-v0.3.0.zip` from the [**Releases**](../../releases) page.
 2. Unzip it somewhere.
 3. Open `chrome://extensions` and turn on **Developer mode** (top right).
 4. Click **Load unpacked** and pick the unzipped folder.
@@ -231,14 +243,21 @@ ComicK-Revive/
 │   ├── viewer/          # Reader UI (runs in page context)
 │   │   ├── readers/     # Vertical / Single / Double page readers (+ continuous reading)
 │   │   └── components/  # Source-link modal, chapter picker, settings, cache manager, ...
+│   ├── dashboard/       # Dashboard page: library, history, search, stats, sources, settings
+│   ├── popup/           # Toolbar popup: recent reads + quick stats
 │   ├── sources/         # MangaSource impls + CachedSource wrapper + registry
-│   ├── core/            # Storage, Settings, ReadingState, SourceMapping, image/data caches
+│   │   ├── engines/     # Theme engines (Madara): one implementation drives many sites
+│   │   ├── catalog/     # Built-in source catalog presets (pure data, one line per site)
+│   │   └── spec/        # JSON source-spec format + interpreter (user-added sources)
+│   ├── core/            # Storage, Settings, ReadingState, SourceMapping, Library, History, caches
 │   ├── utils/           # bridge, imageLoader, fuzzy-match, keyboard, smooth-scroll, ...
-│   ├── shared/          # Code shared across contexts (HTML title parsing)
+│   ├── shared/          # Code shared across contexts (covers, backup, bot-wall detection, ...)
 │   └── types/           # Shared TypeScript types + defaults
-├── rules/               # declarativeNetRequest header rules (per source)
-├── assets/icons/        # Extension icons
-├── scripts/package.cjs  # Builds the installable release zip
+├── specs/               # Example JSON source specs (MangaPill, WeebCentral)
+├── doc/                 # Guides (adding sources)
+├── rules/               # declarativeNetRequest header rules
+├── assets/icons/        # Extension icons + bundled catalog source icons
+├── scripts/             # Release zip + catalog tooling (live-site probe, preset/icon harvesters)
 ├── manifest.json        # MV3 manifest
 └── vite.config.ts       # One build entry per execution context
 ```
@@ -247,18 +266,19 @@ ComicK-Revive/
 
 ## 🧩 Adding a new source
 
-1. Implement the `MangaSource` interface (`src/sources/Source.interface.ts`) in `src/sources/YourSource.ts`.
-2. Register it in `src/sources/index.ts` with `this.register(yourSource)`. It gets wrapped in the caching layer automatically.
-3. Add the site's domains to `host_permissions` in `manifest.json` (and a DNR rule in `rules/` if the CDN needs a `Referer`).
-4. Add its domain config (referer and headers) to `src/utils/sourceDomains.ts`.
+Three ways, easiest first; the full guide with the spec format reference lives in **[doc/adding-sources.md](doc/adding-sources.md)**.
 
-The Kotlin source implementations in the Tachiyomi / keiyoushi ecosystem are a good reference for parsing each site.
+1. **Source catalog** (one click). Dashboard → Sources → **Browse catalog**: 70+ built-in sites, each asking for its own site permission when enabled. **Test all** verifies every site end to end from your network.
+2. **JSON source spec** (no rebuild). Teach the reader a new site with a single JSON file: Dashboard → Sources → **Add source**. A built-in prompt lets an AI write the spec for you, and the test tool checks it step by step against the live site. Start from the working examples: [`specs/mangapill.json`](specs/mangapill.json) (clean starter) and [`specs/weebcentral.json`](specs/weebcentral.json) (advanced: offset pagination, scoped selector chains, fallbacks).
+3. **Built-in TypeScript source** (contributors). Implement `MangaSource` (`src/sources/Source.interface.ts`), register it in `src/sources/index.ts`, add the site to `host_permissions`. If the site runs the Madara WordPress theme, skip the code: it's a one-line preset in `src/sources/catalog/presets.ts`.
+
+The Kotlin implementations in the Tachiyomi / keiyoushi ecosystem remain the best reference for how each site behaves.
 
 <br/>
 
 ## ⚠️ Known issues
 
-This is a `0.2.0` beta, so expect rough edges. Sources can also break when a site changes its markup. If a title stops loading, try the chapter **refresh** button or re-link the source.
+This is a `0.3.0` beta, so expect rough edges. Sources can also break when a site changes its markup or moves domains. If a title stops loading, try the chapter **refresh** button or re-link the source.
 
 - **Continuous reading** (scrolling straight from one chapter into the next) is **experimental and off by default**. It can break when you resume a session, so turn it on in settings only if you want to try it.
 - The **page counter** sometimes freezes during fast navigation.

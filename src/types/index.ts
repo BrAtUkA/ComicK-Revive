@@ -31,8 +31,9 @@ export interface GlobalSettings {
   // Behavior
   rememberChapter: boolean;
   rememberPerChapterPosition: boolean;
-  resumePositionOnReadChapter: boolean;
   keyboardShortcutsEnabled: boolean;
+  /** Show 18+ entries in the source catalog (off by default) */
+  showNsfwSources: boolean;
   markReadMode: MarkReadMode;
   continuousReading: boolean;
 
@@ -58,8 +59,8 @@ export const DEFAULT_SETTINGS: GlobalSettings = {
   scrollbarAutoHide: false,
   rememberChapter: true,
   rememberPerChapterPosition: true,
-  resumePositionOnReadChapter: false,
   keyboardShortcutsEnabled: true,
+  showNsfwSources: false,
   markReadMode: 'onOpen',
   continuousReading: false,
   enableImageCache: true,
@@ -187,7 +188,9 @@ export interface ComickPageData {
   language?: string;
   pageType: 'manga' | 'chapter';
   overrideChapter?: number;  // If set, viewer opens this chapter instead of saved state
-  startFromBeginning?: boolean;  // If true, skip position restore and start chapter from page 1
+  startFromBeginning?: boolean;  // Set by ComicK's "Read This Chapter" button. Informational only:
+                                 // position restore follows the remember-position setting for every
+                                 // entry point (finished chapters always start at page 1).
   forceResume?: boolean;  // If true, restore saved position even when "Remember Reading Position" is off
                          // Set by the explicit "Continue Reading" / "Continue Ch.X" buttons whose
                          // sole purpose is resuming — those override the master toggle.

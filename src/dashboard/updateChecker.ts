@@ -34,29 +34,33 @@ function compareVersions(a: string, b: string): number {
   return 0;
 }
 
-async function fetchLatest(): Promise<{ tag: string; htmlUrl: string } | null> {
+/** 'none' = the repo has no published releases (404), distinct from offline */
+async function fetchLatest(): Promise<{ tag: string; htmlUrl: string } | 'none'> {
   const res = await fetch(`https://api.github.com/repos/${REPO}/releases/latest`, {
     headers: { Accept: 'application/vnd.github+json' },
+    cache: 'no-store',
   });
-  if (!res.ok) return null; // 404 = no releases published yet
+  if (res.status === 404) return 'none';
+  if (!res.ok) throw new Error(`GitHub returned ${res.status}`);
   const json = await res.json() as { tag_name?: string; html_url?: string };
-  if (!json.tag_name) return null;
+  if (!json.tag_name) return 'none';
   return { tag: json.tag_name, htmlUrl: json.html_url || `https://github.com/${REPO}/releases` };
 }
 
-export async function checkForUpdate(force = false): Promise<UpdateResult | null> {
+/** null = skipped (interval); 'offline' = network/rate-limit failure */
+export async function checkForUpdate(force = false): Promise<UpdateResult | 'none' | 'offline' | null> {
   if (!force) {
     const last = Number(localStorage.getItem(LAST_CHECK_KEY) || 0);
     if (Date.now() - last < CHECK_INTERVAL_MS) return null;
   }
-  let latest: { tag: string; htmlUrl: string } | null;
+  let latest: { tag: string; htmlUrl: string } | 'none';
   try {
     latest = await fetchLatest();
   } catch {
-    return null; // offline or rate limited; try again next open
+    return 'offline'; // try again next open
   }
   localStorage.setItem(LAST_CHECK_KEY, String(Date.now()));
-  if (!latest) return null;
+  if (latest === 'none') return 'none';
 
   const current = currentVersion();
   return {
@@ -70,17 +74,21 @@ export async function checkForUpdate(force = false): Promise<UpdateResult | null
 /** Auto-check on dashboard open; banner only for a not-yet-dismissed version. */
 export async function initUpdateChecker(): Promise<void> {
   const result = await checkForUpdate(false);
-  if (!result?.hasUpdate) return;
+  if (!result || typeof result === 'string' || !result.hasUpdate) return;
   if (localStorage.getItem(DISMISSED_KEY) === result.latest) return;
   renderBanner(result);
 }
 
-/** Manual "Check now": always fetches, always reports the outcome. */
+/** Manual "Check now": always fetches, always reports the true outcome. */
 export async function manualCheck(): Promise<void> {
   showDashToast('Checking for updates…');
   const result = await checkForUpdate(true);
-  if (!result) {
+  if (result === 'offline' || result === null) {
     showDashToast('Could not reach GitHub. Try again later.');
+    return;
+  }
+  if (result === 'none') {
+    showDashToast(`No releases published yet. You're running v${currentVersion()}.`);
     return;
   }
   if (result.hasUpdate) {

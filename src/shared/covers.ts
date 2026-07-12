@@ -1,5 +1,5 @@
 import { sourceRegistry } from '@/sources';
-import { bridgeFetchImageCached } from '@/utils/bridge';
+import { bridgeFetchImageCached, type CacheKey } from '@/utils/bridge';
 
 /**
  * Cover loading shared by the dashboard library and the popup.
@@ -34,6 +34,33 @@ async function withFetchSlot<T>(fn: () => Promise<T>): Promise<T> {
 }
 
 /**
+ * Fetch an image through the background proxy (referer DNR rules apply)
+ * and cache it under the given key. Returns a data URL, or null when the
+ * fetch failed. Never throws.
+ *
+ * `stillWanted` (optional) is re-checked after a slot is acquired: a queued
+ * request may have gone stale while waiting (new search, element removed),
+ * and skipping the bridge round-trip hands the slot straight to the next
+ * waiter. The caller distinguishes "skipped" from "failed" by re-evaluating
+ * its own staleness condition after the await.
+ */
+export async function getImageDataUrl(
+  url: string,
+  cacheKey: CacheKey,
+  opts?: { stillWanted?: () => boolean }
+): Promise<string | null> {
+  try {
+    const { dataUrl } = await withFetchSlot(async () => {
+      if (opts?.stillWanted && !opts.stillWanted()) return { dataUrl: '' };
+      return bridgeFetchImageCached(url, cacheKey);
+    });
+    return dataUrl || null;
+  } catch {
+    return null;
+  }
+}
+
+/**
  * Resolve a manga's cover to a data URL, or null when unavailable.
  * Never throws.
  */
@@ -45,13 +72,12 @@ export async function getCoverDataUrl(sourceId: string, sourceSlug: string): Pro
     const details = await withFetchSlot(() => source.getMangaDetails(sourceSlug));
     if (!details?.thumbnailUrl) return null;
 
-    const { dataUrl } = await bridgeFetchImageCached(details.thumbnailUrl, {
+    return await getImageDataUrl(details.thumbnailUrl, {
       sourceId,
       mangaSlug: sourceSlug,
       chapterSlug: COVER_CHAPTER_KEY,
       pageIndex: 0,
     });
-    return dataUrl || null;
   } catch {
     return null;
   }

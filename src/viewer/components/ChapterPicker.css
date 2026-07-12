@@ -46,10 +46,12 @@
 
 .cr-picker-search {
   flex: 1;
+  min-width: 0;
 }
 
 .cr-picker-search-input {
   width: 100%;
+  box-sizing: border-box; /* keep padding inside the flex slot, not past it */
   padding: 8px 12px;
   font-size: 14px;
   color: #fff;
@@ -69,6 +71,7 @@
   justify-content: center;
   width: 32px;
   height: 32px;
+  flex-shrink: 0;
   background: transparent;
   border: none;
   border-radius: 6px;
@@ -89,6 +92,7 @@
   justify-content: center;
   width: 32px;
   height: 32px;
+  flex-shrink: 0;
   background: transparent;
   border: none;
   border-radius: 6px;

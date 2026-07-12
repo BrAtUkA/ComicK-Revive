@@ -88,15 +88,15 @@ export function buildSettingsSchema(): SettingsSection[] {
     {
       title: 'Behavior',
       fields: [
-        { kind: 'toggle', key: 'rememberChapter', label: 'Remember chapter', desc: 'Reopen the manga at the last chapter you read' },
-        { kind: 'toggle', key: 'rememberPerChapterPosition', label: 'Remember position', desc: 'Restore your scroll position within each chapter' },
-        { kind: 'toggle', key: 'resumePositionOnReadChapter', label: 'Resume on "Read This Chapter"', desc: 'Restore position even when opening a specific chapter' },
+        { kind: 'toggle', key: 'rememberChapter', label: 'Remember chapter', desc: 'Opening a manga returns to the chapter you were on' },
+        { kind: 'toggle', key: 'rememberPerChapterPosition', label: 'Remember position in chapters', desc: 'Unfinished chapters reopen where you stopped; finished ones start at page 1. Continue always resumes.' },
+        { kind: 'toggle', key: 'showNsfwSources', label: 'Show 18+ sources', desc: 'List adult sites in the source catalog. Off hides them everywhere.' },
         {
-          kind: 'select', key: 'markReadMode', label: 'Mark chapters read',
-          desc: 'When a chapter counts as read',
+          kind: 'select', key: 'markReadMode', label: 'Mark as read',
+          desc: 'When a chapter earns its read tick; finished means last page reached or moved on',
           options: [
             { value: 'onOpen', label: 'When opened' },
-            { value: 'onNextChapter', label: 'On next chapter' },
+            { value: 'onNextChapter', label: 'When finished' },
           ],
         },
       ],

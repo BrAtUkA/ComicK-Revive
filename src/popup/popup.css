@@ -1,20 +1,38 @@
 /* ComicK Revive — Popup
    The body carries both .crd (shared design tokens from the dashboard) and
    .crp (popup layout). Everything here is scoped under .crp because this
-   stylesheet ships in the shared CSS bundle. */
+   stylesheet ships in the shared CSS bundle.
+
+   Layout contract: the document never scrolls (Chrome caps popups at 600px
+   and a body scrollbar shifts the whole surface sideways). Header, stats,
+   and footer are fixed; only the continue-reading list scrolls, inside a
+   stable gutter. */
+
+html:has(> body.crp) {
+  overflow: hidden;
+  scrollbar-gutter: auto; /* undo the dashboard's root gutter reservation */
+}
 
 .crp {
   width: 384px;
-  min-height: 0;
-  background:
-    radial-gradient(340px 200px at 85% -40px, rgba(99, 102, 241, 0.10), transparent 65%),
-    var(--crd-bg);
+  background: var(--crd-bg);
+  overflow: hidden;
 }
 
 .crp ::-webkit-scrollbar { width: 6px; }
-.crp ::-webkit-scrollbar-thumb { border: none; }
+.crp ::-webkit-scrollbar-track { background: transparent; }
+.crp ::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border: none;
+  border-radius: 3px;
+}
+.crp ::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.18); }
 
-#crp-app { display: flex; flex-direction: column; }
+#crp-app {
+  display: flex;
+  flex-direction: column;
+  max-height: 600px;
+}
 
 /* ═══════ Header ═══════ */
 
@@ -22,47 +40,51 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 14px 16px 12px;
+  padding: 12px 16px;
   border-bottom: 1px solid var(--crd-line);
+  flex-shrink: 0;
 }
-.crp-head .crd-brand-mark { width: 28px; height: 28px; border-radius: 8px; }
-.crp-head .crd-brand-mark svg { width: 15px; height: 15px; }
+.crp-head .crd-brand-mark { width: 27px; height: 27px; border-radius: 8px; }
+.crp-head .crd-brand-mark svg { width: 14px; height: 14px; }
 .crp-title-text {
   font-weight: 700;
-  font-size: 13.5px;
+  font-size: 13px;
   letter-spacing: -0.01em;
   flex: 1;
 }
 .crp-icon-btn {
   display: grid;
   place-items: center;
-  width: 30px;
-  height: 30px;
+  width: 28px;
+  height: 28px;
   background: transparent;
-  border: 1px solid transparent;
-  border-radius: 8px;
-  color: var(--crd-ink-2);
+  border: none;
+  border-radius: 7px;
+  color: var(--crd-ink-3);
   cursor: pointer;
-  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+  transition: background 0.13s ease, color 0.13s ease;
 }
-.crp-icon-btn:hover { background: var(--crd-accent-dim); color: var(--crd-ink); border-color: rgba(99, 102, 241, 0.3); }
-.crp-icon-btn svg { width: 16px; height: 16px; }
+.crp-icon-btn:hover { background: rgba(255, 255, 255, 0.05); color: var(--crd-ink); }
+.crp-icon-btn svg { width: 15px; height: 15px; }
 
-/* ═══════ Mini stats ═══════ */
+/* ═══════ Mini stats: one flat panel, hairline-divided cells ═══════ */
 
 .crp-stats {
   display: grid;
   grid-template-columns: 1fr 1fr 1fr;
-  gap: 8px;
-  padding: 12px 16px;
-}
-.crp-stat {
+  margin: 12px 16px 0;
   background: var(--crd-panel);
   border: 1px solid var(--crd-line);
-  border-radius: 9px;
-  padding: 8px 10px 7px;
+  border-radius: 10px;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+.crp-stats[hidden] { display: none; }
+.crp-stat {
+  padding: 9px 6px 8px;
   text-align: center;
 }
+.crp-stat + .crp-stat { border-left: 1px solid var(--crd-line); }
 .crp-stat b {
   display: block;
   font-family: var(--crd-mono);
@@ -81,18 +103,37 @@
 /* ═══════ Continue reading list ═══════ */
 
 .crp-section {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  padding: 14px 18px 6px;
+  flex-shrink: 0;
+}
+.crp-section-label {
   font-family: var(--crd-mono);
   font-size: 9.5px;
   letter-spacing: 0.18em;
   text-transform: uppercase;
   color: var(--crd-ink-3);
-  padding: 4px 16px 6px;
 }
+.crp-view-all {
+  background: none;
+  border: none;
+  padding: 0;
+  font-family: var(--crd-mono);
+  font-size: 10px;
+  color: var(--crd-ink-3);
+  cursor: pointer;
+  transition: color 0.13s ease;
+}
+.crp-view-all:hover { color: var(--crd-accent-2); }
 
 .crp-list {
-  max-height: 336px;
+  flex: 1;
+  min-height: 0;
   overflow-y: auto;
-  padding: 0 8px;
+  scrollbar-gutter: stable;
+  padding: 0 4px 8px 10px;
 }
 
 .crp-row {
@@ -117,7 +158,7 @@
   height: 54px;
   border-radius: 6px;
   overflow: hidden;
-  background: linear-gradient(160deg, #191922, #101014);
+  background: #17171c;
   border: 1px solid var(--crd-line);
   flex-shrink: 0;
   display: grid;
@@ -160,9 +201,9 @@
 /* ═══════ Footer ═══════ */
 
 .crp-foot {
-  padding: 10px 16px 14px;
+  padding: 10px 16px 12px;
   border-top: 1px solid var(--crd-line);
-  margin-top: 6px;
+  flex-shrink: 0;
 }
 .crp-foot .crd-btn {
   width: 100%;

@@ -41,8 +41,16 @@ export class CachedMangaSource implements MangaSource {
   private pendingChapters = new Map<string, Promise<Chapter[]>>();
   private pendingPages = new Map<string, Promise<PageInfo[]>>();
 
+  // Listings pass through uncached (dynamic, like search). Assigned in the
+  // constructor only when the wrapped source implements them, so feature
+  // detection (`source.getPopular != null`) keeps working through the wrapper.
+  getPopular?: (page?: number) => Promise<SearchResult[]>;
+  getLatest?: (page?: number) => Promise<SearchResult[]>;
+
   constructor(source: MangaSource) {
     this.source = source;
+    if (source.getPopular) this.getPopular = (page?: number) => this.source.getPopular!(page);
+    if (source.getLatest) this.getLatest = (page?: number) => this.source.getLatest!(page);
   }
 
   // Delegate properties
@@ -96,14 +104,29 @@ export class CachedMangaSource implements MangaSource {
     const promise = (async () => {
       console.log(`[CachedSource] Fetching manga details for ${slug} from source`);
       const details = await this.source.getMangaDetails(slug);
-      // Cache under the canonical slug
-      await bridgeSetCachedDetails(this.id, details.slug, details);
-      // Also cache under the input slug if it differs (e.g. base slug → full slug)
-      // so future lookups with either key hit the cache
-      if (details.slug !== slug) {
-        await bridgeSetCachedDetails(this.id, slug, details);
+      // Only cache details that parsed into something real. Scrape engines
+      // fall back to the slug as title when the page wasn't what we expected
+      // (bot wall served with 200, wrong manga path, redesign) — caching that
+      // shape would pin the garbage for the full 30-day TTL.
+      const looksComplete = !!details.title
+        && details.title.toLowerCase() !== slug.toLowerCase()
+        && !!(details.description || details.thumbnailUrl);
+      if (looksComplete) {
+        // Cache under the canonical slug
+        await bridgeSetCachedDetails(this.id, details.slug, details);
+        // Also cache under the input slug if it differs (e.g. base slug → full slug)
+        // so future lookups with either key hit the cache
+        if (details.slug !== slug) {
+          await bridgeSetCachedDetails(this.id, slug, details);
+        }
+        console.log(`[CachedSource] Cached manga details for ${details.slug}`);
+      } else {
+        // Informational: the parse looks like a challenge page or wrong manga
+        // path (title fell back to the slug, no description/thumbnail), so it
+        // is NOT cached and the next request retries fresh. warn (not log)
+        // because log is stripped from production builds.
+        console.warn(`[CachedSource] ${this.id}: details for "${slug}" look incomplete (title=${JSON.stringify(details.title)}, desc=${!!details.description}, thumb=${!!details.thumbnailUrl}); not caching so it can retry`);
       }
-      console.log(`[CachedSource] Cached manga details for ${details.slug}`);
       return details;
     })();
 

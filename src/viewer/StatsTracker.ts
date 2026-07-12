@@ -25,6 +25,9 @@ export class StatsTracker {
   private sinceFlushMs = 0;
   private tickTimer: ReturnType<typeof setInterval> | null = null;
 
+  /** Extra sink for flushed seconds (the viewer attributes them to a chapter) */
+  onFlush?: (seconds: number) => void;
+
   private readonly onActivity = (): void => {
     this.lastActivity = Date.now();
   };
@@ -79,6 +82,7 @@ export class StatsTracker {
     this.pendingSec = 0;
     this.sinceFlushMs = 0;
     await statsManager.addActiveTime(seconds, this.comickSlug);
+    this.onFlush?.(seconds);
   }
 
   private stopTimers(): void {

@@ -281,6 +281,9 @@ export class MangaDex implements MangaSource {
           'order[chapter]': 'desc',
           includeFuturePublishAt: '0',
           includeEmptyPages: '0',
+          // Chapters whose files were pulled still have feed records; without
+          // this they get listed and then fail at the at-home page request
+          includeUnavailable: '0',
         });
 
         params.append('includes[]', 'scanlation_group');
@@ -343,6 +346,10 @@ export class MangaDex implements MangaSource {
       const externalUrl = attrs.externalUrl as string | null;
       const pages = attrs.pages as number;
       if (externalUrl && pages === 0) continue;
+
+      // Skip unavailable chapters (files removed, record remains); belt and
+      // braces on top of includeUnavailable=0 for cached/edge responses
+      if (attrs.isUnavailable === true) continue;
 
       // Parse chapter number
       const chapterStr = attrs.chapter as string | null;

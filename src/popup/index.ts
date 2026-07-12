@@ -9,11 +9,9 @@
 import './popup.css';
 import { readingStateManager, sourceMappingManager, statsManager } from '@/core';
 import { getCoverDataUrl } from '@/shared/covers';
-import { isStandaloneSlug } from '@/shared/standalone';
 import { timeAgo, titleFromSlug, escapeHtml, fmtDuration } from '@/shared/fmt';
 
-const COMICK_ORIGIN = 'https://comick.dev';
-const MAX_ROWS = 6;
+const MAX_ROWS = 10;
 
 const BRAND_SVG = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20V4a1 1 0 0 0-1-1H6.5A2.5 2.5 0 0 0 4 5.5v14z"/><path d="M4 19.5A2.5 2.5 0 0 0 6.5 22H20v-5"/></svg>`;
 const DASH_SVG = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg>`;
@@ -37,13 +35,9 @@ function openDashboard(hash = ''): void {
 }
 
 function openResume(comickSlug: string): void {
-  if (isStandaloneSlug(comickSlug)) {
-    // Standalone manga read inside the dashboard, not on comick.dev
-    openDashboard(`#read=${encodeURIComponent(comickSlug)}`);
-    return;
-  }
-  chrome.tabs.create({ url: `${COMICK_ORIGIN}/comic/${comickSlug}?crv_resume=1` });
-  window.close();
+  // Everything resumes in the dashboard reader (decided 2026-07-06);
+  // comick.dev stays a click away from the library details view
+  openDashboard(`#read=${encodeURIComponent(comickSlug)}`);
 }
 
 async function render(): Promise<void> {
@@ -57,7 +51,10 @@ async function render(): Promise<void> {
       <button class="crp-icon-btn" id="crp-dash-btn" title="Open dashboard">${DASH_SVG}</button>
     </header>
     <div class="crp-stats" id="crp-stats" hidden></div>
-    <div class="crp-section">Continue reading</div>
+    <div class="crp-section">
+      <span class="crp-section-label">Continue reading</span>
+      <button class="crp-view-all" id="crp-view-all">View all</button>
+    </div>
     <div class="crp-list" id="crp-list"></div>
     <footer class="crp-foot">
       <button class="crd-btn" id="crp-dash-open">Open dashboard</button>
@@ -66,6 +63,7 @@ async function render(): Promise<void> {
 
   root.querySelector('#crp-dash-btn')?.addEventListener('click', () => openDashboard());
   root.querySelector('#crp-dash-open')?.addEventListener('click', () => openDashboard());
+  root.querySelector('#crp-view-all')?.addEventListener('click', () => openDashboard('#library'));
 
   await Promise.all([renderList(root), renderStats(root)]);
 }

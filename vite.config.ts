@@ -1,6 +1,6 @@
 import { defineConfig } from 'vite';
 import { resolve } from 'path';
-import { copyFileSync, mkdirSync, existsSync } from 'fs';
+import { copyFileSync, mkdirSync, existsSync, readdirSync } from 'fs';
 
 // Resolve everything against the directory npm ran the build from (the
 // package root). This is identical on every OS and Node version, unlike
@@ -39,16 +39,14 @@ const copyManifestPlugin = () => ({
       copyFileSync(contentStylesSrc, resolve(distDir, 'content.css'));
     }
 
-    // declarativeNetRequest rule files.
+    // declarativeNetRequest rule files (every rules/*.json the manifest lists).
     const rulesSrcDir = fromRoot('rules');
     if (existsSync(rulesSrcDir)) {
       const rulesDestDir = resolve(distDir, 'rules');
       mkdirSync(rulesDestDir, { recursive: true });
-      for (const ruleFile of ['mangadex.json', 'asura.json']) {
-        const ruleSrc = resolve(rulesSrcDir, ruleFile);
-        if (existsSync(ruleSrc)) {
-          copyFileSync(ruleSrc, resolve(rulesDestDir, ruleFile));
-        }
+      for (const ruleFile of readdirSync(rulesSrcDir)) {
+        if (!ruleFile.endsWith('.json')) continue;
+        copyFileSync(resolve(rulesSrcDir, ruleFile), resolve(rulesDestDir, ruleFile));
       }
     }
 
@@ -59,6 +57,17 @@ const copyManifestPlugin = () => ({
       const srcPath = fromRoot('assets/icons', file);
       if (existsSync(srcPath)) {
         copyFileSync(srcPath, resolve(iconsDir, file));
+      }
+    }
+
+    // Catalog source icons (harvested by scripts/harvest-icons.mjs).
+    const catalogIconsSrc = fromRoot('assets/icons/catalog');
+    if (existsSync(catalogIconsSrc)) {
+      const catalogIconsDest = resolve(iconsDir, 'catalog');
+      mkdirSync(catalogIconsDest, { recursive: true });
+      for (const file of readdirSync(catalogIconsSrc)) {
+        if (!file.endsWith('.png')) continue;
+        copyFileSync(resolve(catalogIconsSrc, file), resolve(catalogIconsDest, file));
       }
     }
   },

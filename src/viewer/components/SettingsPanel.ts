@@ -191,12 +191,12 @@ export class SettingsPanel {
 
             <div class="cr-setting-item">
               <div class="cr-setting-info">
-                <label>Mark Chapter as Read</label>
-                <span class="cr-setting-desc">When to mark a chapter as read</span>
+                <label>Mark as Read</label>
+                <span class="cr-setting-desc">When a chapter earns its read tick. "When finished" means you reached the last page or moved on to the next chapter.</span>
               </div>
               <div class="cr-segmented-toggle" id="cr-setting-mark-read">
-                <button class="cr-segmented-option ${this.settings.markReadMode === 'onOpen' ? 'active' : ''}" data-value="onOpen">Read on Open</button>
-                <button class="cr-segmented-option ${this.settings.markReadMode === 'onNextChapter' ? 'active' : ''}" data-value="onNextChapter">Read on Next Chapter</button>
+                <button class="cr-segmented-option ${this.settings.markReadMode === 'onOpen' ? 'active' : ''}" data-value="onOpen">When Opened</button>
+                <button class="cr-segmented-option ${this.settings.markReadMode === 'onNextChapter' ? 'active' : ''}" data-value="onNextChapter">When Finished</button>
               </div>
             </div>
 
@@ -213,22 +213,11 @@ export class SettingsPanel {
 
             <div class="cr-setting-item">
               <div class="cr-setting-info">
-                <label>Remember Reading Position</label>
-                <span class="cr-setting-desc">Return to where you stopped when reopening a chapter. The green "Continue Reading" button always resumes regardless of this setting.</span>
+                <label>Remember Position in Chapters</label>
+                <span class="cr-setting-desc">Unfinished chapters reopen where you stopped, no matter how you open them. Finished chapters start from page 1. The green Continue Reading button always resumes.</span>
               </div>
               <label class="cr-toggle">
                 <input type="checkbox" id="cr-setting-remember-position" ${this.settings.rememberPerChapterPosition ? 'checked' : ''}>
-                <span class="cr-toggle-slider"></span>
-              </label>
-            </div>
-
-            <div class="cr-setting-item">
-              <div class="cr-setting-info">
-                <label>Resume on "Read This Chapter"</label>
-                <span class="cr-setting-desc">The purple "Read This Chapter" button on ComicK normally starts from page 1. Enable to make it resume from your saved position instead.</span>
-              </div>
-              <label class="cr-toggle">
-                <input type="checkbox" id="cr-setting-resume-on-read" ${this.settings.resumePositionOnReadChapter ? 'checked' : ''}>
                 <span class="cr-toggle-slider"></span>
               </label>
             </div>
@@ -458,11 +447,6 @@ export class SettingsPanel {
       this.hasChanges = true;
     });
 
-    document.getElementById('cr-setting-resume-on-read')?.addEventListener('change', (e) => {
-      this.settings.resumePositionOnReadChapter = (e.target as HTMLInputElement).checked;
-      this.hasChanges = true;
-    });
-
     document.getElementById('cr-setting-autohide')?.addEventListener('change', (e) => {
       this.settings.toolbarAutoHide = (e.target as HTMLInputElement).checked;
       this.hasChanges = true;
@@ -570,7 +554,6 @@ export class SettingsPanel {
     const speedLabel = document.getElementById('cr-scroll-speed-value');
     if (speedLabel) speedLabel.textContent = this.settings.scrollSpeed.toFixed(1);
     (document.getElementById('cr-setting-remember-position') as HTMLInputElement).checked = this.settings.rememberPerChapterPosition;
-    (document.getElementById('cr-setting-resume-on-read') as HTMLInputElement).checked = this.settings.resumePositionOnReadChapter;
     (document.getElementById('cr-setting-continuous-reading') as HTMLInputElement).checked = this.settings.continuousReading;
     // Update mark read segmented toggle
     document.getElementById('cr-setting-mark-read')?.querySelectorAll('.cr-segmented-option').forEach(btn => {

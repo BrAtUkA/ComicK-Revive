@@ -449,7 +449,7 @@ export class GridView {
       return '<div class="cr-grid-relevant-empty">No results yet...</div>';
     }
 
-    const cardsHtml = entries.map(({ result, sourceId }) => {
+    const cardsHtml = entries.map(({ result, sourceId, score }) => {
       const globalIndex = this.host.getSearchResults().indexOf(result);
       const cacheKey = `${sourceId}:${result.slug}`;
       const cachedCount = this.host.chapterCountCache.get(cacheKey);
@@ -457,11 +457,17 @@ export class GridView {
         ? `<span class="cr-chapter-count">${cachedCount} ch.</span>`
         : '<span class="cr-chapter-count-loading"><span class="cr-count-spinner"></span></span>';
       const sourceName = this.host.getSourceNameById(sourceId);
+      // Surface the (always-computed) match score so a weak best-guess is
+      // visibly different from a near-exact hit. Overlaid on the cover:
+      // the meta row is too narrow for a third chip at this card width.
+      const pctClass = score >= 0.8 ? 'high' : score >= 0.5 ? 'mid' : 'low';
+      const pctHtml = `<span class="cr-match-pct ${pctClass}" title="Title similarity to this manga">${Math.round(score * 100)}%</span>`;
 
       return `
         <div class="cr-grid-card cr-grid-card-relevant${cachedCount === 0 ? ' cr-no-chapters' : ''}"
              data-index="${globalIndex}" data-slug="${result.slug}" data-source-id="${sourceId}">
           <div class="cr-grid-card-thumb-container">
+            ${pctHtml}
             <img
               src="${this.host.getThumbnailSrc(result.thumbnailUrl)}"
               data-original-url="${result.thumbnailUrl}"

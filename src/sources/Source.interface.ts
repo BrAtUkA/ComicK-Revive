@@ -34,6 +34,18 @@ export interface MangaSource {
   search(query: string, page?: number): Promise<SearchResult[]>;
 
   /**
+   * Browse the source's most-viewed manga (optional; listing-capable sources only)
+   * @param page - Page number (1-indexed)
+   */
+  getPopular?(page?: number): Promise<SearchResult[]>;
+
+  /**
+   * Browse the source's most recently updated manga (optional)
+   * @param page - Page number (1-indexed)
+   */
+  getLatest?(page?: number): Promise<SearchResult[]>;
+
+  /**
    * Get detailed manga information
    * @param slug - Manga slug/identifier
    */
@@ -66,7 +78,7 @@ export class SourceError extends Error {
   constructor(
     message: string,
     public sourceId: string,
-    public code: 'NETWORK' | 'PARSE' | 'NOT_FOUND' | 'RATE_LIMITED' | 'CANCELLED' | 'UNKNOWN'
+    public code: 'NETWORK' | 'PARSE' | 'NOT_FOUND' | 'RATE_LIMITED' | 'CANCELLED' | 'BLOCKED' | 'UNKNOWN'
   ) {
     super(message);
     this.name = 'SourceError';

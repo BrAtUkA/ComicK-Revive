@@ -7,3 +7,6 @@ export { ImageCacheManager, imageCache, type CacheKey, type CachedImage, type Ca
 export { StatsManager, statsManager, dayKey, type DailyStats, type StatsTotals } from './Stats';
 export { SourceConfigManager, sourceConfigManager, type SourceConfig } from './SourceConfig';
 export { UserSourcesManager, userSourcesManager } from './UserSources';
+export { SourceCatalogManager, sourceCatalogManager } from './SourceCatalog';
+export { LibraryManager, libraryManager, effectiveStatus, type LibraryMeta, type LibraryStatus } from './Library';
+export { HistoryManager, historyManager, type HistoryEntry } from './History';

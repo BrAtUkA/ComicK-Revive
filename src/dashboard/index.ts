@@ -10,6 +10,7 @@ import './dashboard.css';
 import { Dashboard } from './Dashboard';
 import { LibraryTab } from './tabs/LibraryTab';
 import { SearchTab } from './tabs/SearchTab';
+import { HistoryTab } from './tabs/HistoryTab';
 import { StatsTab } from './tabs/StatsTab';
 import { SettingsTab } from './tabs/SettingsTab';
 import { SourcesTab } from './tabs/SourcesTab';
@@ -21,8 +22,9 @@ import { titleFromSlug } from '@/shared/fmt';
 const root = document.getElementById('crd-app');
 if (root) {
   const dashboard = new Dashboard([
-    new SearchTab(),
     new LibraryTab((count) => dashboard.setNavCount('library', count)),
+    new SearchTab(),
+    new HistoryTab(),
     new StatsTab(),
     new SourcesTab(),
     new SettingsTab(),
@@ -31,6 +33,16 @@ if (root) {
 
   // Daily update check (throttled internally); shows a banner if behind
   void initUpdateChecker();
+
+  // The browser context menu looks foreign next to our custom ones; keep it
+  // only where it's genuinely useful: text fields (paste), selected text
+  // (copy), and the reader overlay (save image)
+  document.addEventListener('contextmenu', (e) => {
+    const target = e.target as HTMLElement | null;
+    if (target?.closest('input, textarea, [contenteditable="true"], #comick-revive-viewer')) return;
+    if (window.getSelection()?.toString()) return;
+    e.preventDefault();
+  });
 
   // Deep link from the popup: dashboard.html#read=<slug> opens the reader
   // over the dashboard at the saved position

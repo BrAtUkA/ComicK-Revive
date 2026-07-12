@@ -5,8 +5,20 @@ import { mangaDex } from './MangaDex';
 import { createCachedSource, CachedMangaSource } from './CachedSource';
 import { sourceConfigManager } from '@/core/SourceConfig';
 import { userSourcesManager } from '@/core/UserSources';
+import { sourceCatalogManager } from '@/core/SourceCatalog';
 import { DeclarativeSource } from './spec/DeclarativeSource';
 import type { SourceSpecV1 } from './spec/SourceSpec';
+import { MadaraSource } from './engines/Madara';
+import { getCatalogPreset, type CatalogPreset } from './catalog/presets';
+
+/** Engine dispatch for catalog presets. Also used by the catalog's batch
+ *  tester to run presets that aren't enabled (detached, never registered). */
+export function createEngineSource(preset: CatalogPreset): MangaSource {
+  switch (preset.engine) {
+    case 'madara':
+      return new MadaraSource(preset);
+  }
+}
 
 /**
  * Source Registry - Central registry for all manga sources
@@ -27,6 +39,7 @@ class SourceRegistry {
   private configOrder: string[] = [];
   private configDisabled: Set<string> = new Set();
   private userSourceIds: Set<string> = new Set();
+  private catalogIds: Set<string> = new Set();
   private builtinIds: Set<string> = new Set();
   private rawSources: Map<string, MangaSource> = new Map();
   private originalBaseUrls: Map<string, string> = new Map();
@@ -42,6 +55,7 @@ class SourceRegistry {
     // order with everything enabled applies
     void this.refreshConfig();
     void this.loadUserSources();
+    void this.loadCatalogSources();
     sourceConfigManager.subscribe((config) => {
       this.configOrder = config.order;
       this.configDisabled = new Set(config.disabled);
@@ -63,7 +77,7 @@ class SourceRegistry {
 
   /** Register (or re-register after edit) a declarative user source. */
   registerUserSource(spec: SourceSpecV1): void {
-    if (this.builtinIds.has(spec.id)) {
+    if (this.builtinIds.has(spec.id) || this.catalogIds.has(spec.id)) {
       throw new Error(`Source id "${spec.id}" collides with a built-in source`);
     }
     this.register(new DeclarativeSource(spec));
@@ -82,6 +96,44 @@ class SourceRegistry {
 
   isUserSource(id: string): boolean {
     return this.userSourceIds.has(id);
+  }
+
+  /** Load enabled catalog presets and register their engine instances. */
+  async loadCatalogSources(): Promise<void> {
+    try {
+      const ids = await sourceCatalogManager.getEnabledIds();
+      for (const id of ids) {
+        const preset = getCatalogPreset(id);
+        if (preset && !this.sources.has(id)) {
+          this.registerCatalogSource(preset);
+        }
+      }
+    } catch (error) {
+      console.warn('[SourceRegistry] Failed to load catalog sources:', error);
+    }
+  }
+
+  /** Register (or re-register) an enabled catalog preset. */
+  registerCatalogSource(preset: CatalogPreset): void {
+    if (this.builtinIds.has(preset.id) || this.userSourceIds.has(preset.id)) {
+      throw new Error(`Catalog id "${preset.id}" collides with an existing source`);
+    }
+    this.register(createEngineSource(preset));
+    this.catalogIds.add(preset.id);
+  }
+
+  /** Remove a catalog source from the live registry (storage handled by caller). */
+  unregisterCatalogSource(id: string): void {
+    if (!this.catalogIds.has(id)) return;
+    this.sources.delete(id);
+    this.cachedSources.delete(id);
+    this.rawSources.delete(id);
+    this.originalBaseUrls.delete(id);
+    this.catalogIds.delete(id);
+  }
+
+  isCatalogSource(id: string): boolean {
+    return this.catalogIds.has(id);
   }
 
   /**
@@ -139,6 +191,14 @@ class SourceRegistry {
    */
   getCached(id: string): CachedMangaSource | undefined {
     return this.cachedSources.get(id);
+  }
+
+  /**
+   * Get the raw, uncached source instance (domain overrides applied).
+   * Used by the source test harness so runs hit the live site.
+   */
+  getRaw(id: string): MangaSource | undefined {
+    return this.rawSources.get(id);
   }
 
   /**

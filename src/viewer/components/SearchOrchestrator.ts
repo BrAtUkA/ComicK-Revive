@@ -373,7 +373,7 @@ export class SearchOrchestrator {
       const percent = basePercent + phasePercent;
 
       const progressBar = resultsContainer.querySelector('.cr-progress-bar') as HTMLElement;
-      const headerEl = resultsContainer.querySelector('.cr-progress-header span:not(.cr-source-badge):not(.cr-source-badge-more)');
+      const headerEl = resultsContainer.querySelector('.cr-progress-header span');
       const currentEl = resultsContainer.querySelector('.cr-progress-current');
       const variantEl = resultsContainer.querySelector('.cr-progress-variant');
 
@@ -403,8 +403,8 @@ export class SearchOrchestrator {
         <div class="cr-progress-header">
           <div class="cr-progress-icon"></div>
           <span>Searching exact titles on:</span>
-          <span class="cr-source-badges-group">${sourceBadgesHtml}</span>
         </div>
+        <div class="cr-source-badges-group">${sourceBadgesHtml}</div>
         <div class="cr-progress-bar-container">
           <div class="cr-progress-bar" style="width: 0%"></div>
         </div>

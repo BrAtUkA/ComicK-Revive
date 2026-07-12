@@ -1,5 +1,5 @@
 import { ComickPageData, ReadingMode, ImageFit, PageInfo, Chapter, SearchResult, GlobalSettings, MangaDetails } from '@/types';
-import { ScrollAnchor, settingsManager, readingStateManager, sourceMappingManager, statsManager } from '@/core';
+import { ScrollAnchor, settingsManager, readingStateManager, sourceMappingManager, statsManager, historyManager, libraryManager } from '@/core';
 import { statsTracker } from './StatsTracker';
 import { KeyboardHandler, debounce, setCacheContext, setEvictionCallback, disableEvictionNotifications, updateCacheSettings, clearImageCache, setCachedUrlResolver, bridgeArePagesInCache, bridgeCacheClearChapter, bridgeSetHttpCacheBypass, bridgeSourceDataClearChapterPages, bridgeSourceDataUpdatePageDimensions } from '@/utils';
 import { sourceRegistry } from '@/sources';
@@ -61,9 +61,6 @@ export class Viewer {
   
   // Chapter loading flag - prevents restoring old chapter position
   private isLoadingNewChapter: boolean = false;
-
-  // Skip position restore on initial chapter load (set by "Read This Chapter" button)
-  private skipInitialRestore: boolean = false;
 
   // Force position restore on initial chapter load, overriding the "Remember Reading Position"
   // toggle. Set when the user clicked an explicit "Continue Reading" / "Continue Ch.X" button,
@@ -180,27 +177,24 @@ export class Viewer {
     // Start reading-time tracking for this session
     this.statsCountedChapter = null;
     statsTracker.start(pageData.slug);
+    // Attribute active seconds to the chapter that's open when they flush
+    statsTracker.onFlush = (seconds) => {
+      if (this.pageData) {
+        void historyManager.updateProgress(this.pageData.slug, this.currentChapter, { addSec: seconds });
+      }
+    };
 
     // Load settings
     const settings = await settingsManager.load();
 
-    // Determine whether to skip position restore:
-    // startFromBeginning is set by the "Read This Chapter" button,
-    // but the user can override this with the resumePositionOnReadChapter setting
-    this.skipInitialRestore = !!pageData.startFromBeginning && !settings.resumePositionOnReadChapter;
+    // Every entry point follows the one position-memory setting now; the
+    // purple "Read This Chapter" button (startFromBeginning) is no longer a
+    // special case. Explicit Continue buttons force a restore for this
+    // single open, overriding the setting.
+    this.forceRestoreOnInitialLoad = !!pageData.forceResume;
 
-    // Force-restore signals from the button intent or from Toggle 2.
-    // These override the "Remember Reading Position" master toggle for this single open.
-    //  - forceResume: set by explicit "Continue Reading" / "Continue Ch.X" buttons
-    //  - startFromBeginning + resumePositionOnReadChapter: user toggled Toggle 2 on,
-    //    so "Read This Chapter" should resume too
-    this.forceRestoreOnInitialLoad = !!pageData.forceResume ||
-      (!!pageData.startFromBeginning && settings.resumePositionOnReadChapter);
-
-    console.log('[Viewer] open() called with startFromBeginning:', pageData.startFromBeginning,
-      'forceResume:', pageData.forceResume,
-      '→ skipInitialRestore:', this.skipInitialRestore,
-      'forceRestoreOnInitialLoad:', this.forceRestoreOnInitialLoad);
+    console.log('[Viewer] open() called with forceResume:', pageData.forceResume,
+      '→ forceRestoreOnInitialLoad:', this.forceRestoreOnInitialLoad);
 
     this.currentMode = settings.defaultReadingMode;
     this.currentFit = settings.defaultImageFit;
@@ -292,6 +286,10 @@ export class Viewer {
     // ComicK sets overflow on <html>, so body alone isn't enough
     document.documentElement.style.overflow = 'hidden';
     document.body.style.overflow = 'hidden';
+    // The dashboard reserves a scrollbar gutter (scrollbar-gutter: stable) so
+    // its layout doesn't shift; with overflow hidden that reservation would
+    // linger as an empty strip beside the reader's own scrollbar
+    document.documentElement.style.scrollbarGutter = 'auto';
 
     // Show loading overlay immediately (it's already visible from createViewerDOM)
     this.overlay.showLoading('Checking source mapping...');
@@ -326,8 +324,7 @@ export class Viewer {
       this.showSourceSearch();
     } else {
       // Have mapping - load chapter
-      // Use instance flag (set from pageData.startFromBeginning) for resilience
-      await this.loadChapter(this.currentChapter, this.skipInitialRestore);
+      await this.loadChapter(this.currentChapter);
     }
   }
 
@@ -394,9 +391,10 @@ export class Viewer {
     this.contentArea = null;
     this.toolbarElement = null;
 
-    // Restore host page scroll
+    // Restore host page scroll (and the dashboard's reserved scrollbar gutter)
     document.documentElement.style.overflow = '';
     document.body.style.overflow = '';
+    document.documentElement.style.scrollbarGutter = '';
 
     this.isOpen = false;
     this.pageData = null;
@@ -1223,6 +1221,13 @@ export class Viewer {
       if (this.chapters.length === 0) {
         this.chapters = await source.getChapterList(sourceInfo.slug);
         this.updateChapterDropdown();
+
+        // The user is now looking at the current chapter list: clear any
+        // "new chapters" badge the dashboard library may be showing
+        if (this.chapters.length > 0) {
+          const latest = Math.max(...this.chapters.map((c) => c.number));
+          void libraryManager.markSeen(this.pageData.slug, latest, this.chapters.length);
+        }
       }
 
       // Resolve sentinel -1 to first chapter in the list
@@ -1241,6 +1246,9 @@ export class Viewer {
       if (!chapter) {
         throw new Error(`Chapter ${chapterNum} not found. Available: ${this.chapters.map(c => c.number).join(', ')}`);
       }
+
+      // History timeline entry (re-opens on the same day just refresh it)
+      void historyManager.recordOpen(this.pageData.slug, chapterNum);
 
       // Set cache context for this chapter
       setCacheContext({
@@ -1296,12 +1304,19 @@ export class Viewer {
         const hasNonZeroPosition = chapterPosition &&
           (chapterPosition.anchorImageIndex > 0 || chapterPosition.anchorImageOffset > 0);
 
+        // A saved position at the last page means the chapter was finished;
+        // reopening it starts from page 1 (re-read intent) instead of
+        // dumping the reader at the end
+        const atChapterEnd = !!chapterPosition &&
+          chapterPosition.anchorImageIndex >= this.pages.length - 1;
+
         // Restore if: there's something to restore AND either
-        //  - the "Remember Reading Position" master toggle is on, OR
-        //  - this load was triggered by an explicit-resume button / Toggle 2 override
-        //    (consumed once — only applies to the initial open's first loadChapter call)
+        //  - an explicit Continue button triggered this open (consumed once,
+        //    restores exactly, even into a finished chapter), OR
+        //  - the "Remember Position" toggle is on and the chapter is unfinished
         needsPositionRestore = !!(hasNonZeroPosition &&
-          (settings.rememberPerChapterPosition || this.forceRestoreOnInitialLoad));
+          (this.forceRestoreOnInitialLoad ||
+            (settings.rememberPerChapterPosition && !atChapterEnd)));
       }
 
       // Consume the force-restore flag after the first loadChapter call so subsequent
@@ -2008,6 +2023,9 @@ export class Viewer {
         // Mark the chapter we just left as read (always on next chapter navigation,
         // regardless of markReadMode — if you finished a chapter, it's read)
         await this.markChapterAsRead(chapterToMarkRead);
+        if (this.pageData) {
+          void historyManager.markFinished(this.pageData.slug, chapterToMarkRead);
+        }
       }
     }
   }
@@ -2460,16 +2478,36 @@ export class Viewer {
   }
 
   /**
+   * In "When finished" mode, reaching the last page marks the chapter read
+   * (moving to the next chapter and continuous boundary crossing are the
+   * other finish triggers). No-op in "When opened" mode.
+   */
+  private async markReadIfFinishedMode(chapterNumber: number): Promise<void> {
+    // Capture the slug: close() nulls pageData and these awaits may still be
+    // in flight (the write is still correct, it belongs to this manga)
+    const slug = this.pageData?.slug;
+    if (!slug) return;
+    const settings = await settingsManager.load();
+    if (settings.markReadMode !== 'onNextChapter') return;
+    // savePosition retriggers while sitting on the last page; don't rewrite
+    if (await readingStateManager.isChapterRead(slug, chapterNumber)) return;
+    await readingStateManager.markChapterRead(slug, chapterNumber);
+    void statsManager.recordChapterRead(slug);
+  }
+
+  /**
    * Mark a specific chapter as read
    */
   private async markChapterAsRead(chapterNumber: number): Promise<void> {
-    if (!this.pageData) return;
+    // Capture the slug: close() can null pageData while the awaits below run
+    const slug = this.pageData?.slug;
+    if (!slug) return;
     // Only newly-read chapters count toward stats — re-opening an already-read
     // chapter (markReadMode 'onOpen') shouldn't inflate the read count
-    const alreadyRead = await readingStateManager.isChapterRead(this.pageData.slug, chapterNumber);
-    await readingStateManager.markChapterRead(this.pageData.slug, chapterNumber);
+    const alreadyRead = await readingStateManager.isChapterRead(slug, chapterNumber);
+    await readingStateManager.markChapterRead(slug, chapterNumber);
     if (!alreadyRead) {
-      void statsManager.recordChapterRead(this.pageData.slug);
+      void statsManager.recordChapterRead(slug);
     }
   }
 
@@ -2531,16 +2569,9 @@ export class Viewer {
       // Update image elements reference
       this.imageElements = reader.getImageElements();
 
-      // Mark previous chapter as read if markReadMode is onNextChapter
-      const settings = await settingsManager.load();
-      if (settings.markReadMode === 'onNextChapter') {
-        await this.markChapterAsRead(this.currentChapter);
-      }
-
-      // If markReadMode is onOpen, mark the new chapter as read
-      if (settings.markReadMode === 'onOpen') {
-        await this.markChapterAsRead(nextChapterNum);
-      }
+      // No read-marking here: this runs at PRELOAD time (user is merely near
+      // the end of the current chapter). handleContinuousChapterChange marks
+      // chapters when the user actually crosses the boundary.
 
       // Save page count for the newly loaded chapter
       await readingStateManager.updatePosition(
@@ -2652,11 +2683,8 @@ export class Viewer {
       // Update image elements reference
       this.imageElements = reader.getImageElements();
 
-      // Mark as read if onOpen mode
-      const settings = await settingsManager.load();
-      if (settings.markReadMode === 'onOpen') {
-        await this.markChapterAsRead(prevChapterNum);
-      }
+      // No read-marking here: prepending is a preload, not the user entering
+      // the chapter. handleContinuousChapterChange marks on boundary cross.
 
     } catch (error) {
       console.error(`[Viewer] Failed to load previous chapter for continuous reading:`, error);
@@ -2710,6 +2738,19 @@ export class Viewer {
       }
     }
 
+    const leftChapter = this.currentChapter;
+    const movedForward = chapterNumber > leftChapter;
+
+    // History: crossing a boundary logs the newly entered chapter (these
+    // transitions bypass loadChapter); moving forward means the chapter we
+    // left ended at its last page, so it counts as finished
+    if (this.pageData) {
+      if (movedForward) {
+        void historyManager.markFinished(this.pageData.slug, leftChapter);
+      }
+      void historyManager.recordOpen(this.pageData.slug, chapterNumber);
+    }
+
     // Update current chapter
     this.currentChapter = chapterNumber;
 
@@ -2727,11 +2768,14 @@ export class Viewer {
     const isLastChapter = !this.chapters.some(c => c.number > this.currentChapter);
     this.activeReader?.setChapterBounds(isFirstChapter, isLastChapter);
 
-    // Mark as read based on setting
+    // Mark as read based on setting: entering a chapter counts as opening
+    // it; crossing forward means the chapter we left was finished
     if (this.pageData) {
       settingsManager.load().then(settings => {
         if (settings.markReadMode === 'onOpen') {
           this.markChapterAsRead(chapterNumber);
+        } else if (movedForward) {
+          this.markChapterAsRead(leftChapter);
         }
       });
     }
@@ -3049,6 +3093,9 @@ export class Viewer {
 
   private async savePosition(): Promise<void> {
     if (!this.pageData || !this.activeReader) return;
+    // Capture now: close() nulls pageData, and the debounced autosave can
+    // still be awaiting the position write when that happens
+    const slug = this.pageData.slug;
 
     // Capture position once — avoid double-capture race between getPosition() and getContinuousProgress()
     const position = this.activeReader.getPosition();
@@ -3073,24 +3120,39 @@ export class Viewer {
           anchorImageIndex: progress.currentPage - 1,
         };
         await readingStateManager.updatePosition(
-          this.pageData.slug,
+          slug,
           this.currentSourceId,
           progress.chapterNumber,
           localPosition,
           progress.totalPages
         );
+        void historyManager.updateProgress(slug, progress.chapterNumber, {
+          page: progress.currentPage,
+          pages: progress.totalPages,
+        });
+        if (progress.totalPages > 0 && progress.currentPage >= progress.totalPages) {
+          void this.markReadIfFinishedMode(progress.chapterNumber);
+        }
         return;
       }
     }
 
     // Standard single-chapter save
+    const totalPages = this.activeReader?.getTotalPages() || this.pages.length;
     await readingStateManager.updatePosition(
-      this.pageData.slug,
+      slug,
       this.currentSourceId,
       this.currentChapter,
       position,
-      this.activeReader?.getTotalPages() || this.pages.length
+      totalPages
     );
+    void historyManager.updateProgress(slug, this.currentChapter, {
+      page: position.anchorImageIndex + 1,
+      pages: totalPages,
+    });
+    if (totalPages > 0 && position.anchorImageIndex + 1 >= totalPages) {
+      void this.markReadIfFinishedMode(this.currentChapter);
+    }
   }
 
   /**

@@ -81,7 +81,8 @@ export class SourceMatchModal {
 
   /**
    * Build source badges HTML for all sources being searched.
-   * Shows first 3 badges + "+N more" if >3.
+   * Shows first 3 badges + "+N more" if >3; the "+N more" chip carries the
+   * full remaining list as a hover tooltip.
    */
   private renderSourceBadges(): string {
     const allSources = this.forcedSourceId
@@ -91,8 +92,10 @@ export class SourceMatchModal {
     const badges = allSources.slice(0, maxBadges).map(s =>
       `<span class="cr-source-badge">${s.name}</span>`
     ).join(' ');
-    const remaining = allSources.length - maxBadges;
-    const moreText = remaining > 0 ? ` <span class="cr-source-badge-more">+${remaining} more</span>` : '';
+    const rest = allSources.slice(maxBadges);
+    const moreText = rest.length > 0
+      ? ` <span class="cr-source-badge-more" title="${this.escapeHtml(rest.map(s => s.name).join(', '))}">+${rest.length} more</span>`
+      : '';
     return badges + moreText;
   }
 

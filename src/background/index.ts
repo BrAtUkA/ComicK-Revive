@@ -45,6 +45,24 @@ async function ensureRefererRules(sourceId: string, referer: string, hosts: stri
 }
 
 /**
+ * Deterministic image-fetch failures (CORS throws, hard 4xx) are remembered
+ * briefly so repeated doomed cover URLs short-circuit instead of re-running a
+ * full failing fetch on every render. In-memory only: dies with the service
+ * worker, which is the TTL backstop.
+ */
+const NEGATIVE_TTL_MS = 5 * 60 * 1000;
+const NEGATIVE_CACHE_MAX = 500;
+const imageNegativeCache = new Map<string, { until: number; error: string }>();
+
+function rememberImageFailure(url: string, error: string): void {
+  if (imageNegativeCache.size >= NEGATIVE_CACHE_MAX) {
+    const oldest = imageNegativeCache.keys().next().value;
+    if (oldest !== undefined) imageNegativeCache.delete(oldest);
+  }
+  imageNegativeCache.set(url, { until: Date.now() + NEGATIVE_TTL_MS, error });
+}
+
+/**
  * Memoized referer lookup for user sources ('user_source_{id}' keys — same
  * prefix as STORAGE_KEYS.USER_SOURCE_PREFIX; kept literal here to keep the
  * background's import graph minimal). Lets image fetches for already-cached
@@ -121,8 +139,9 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   // Proxy image through background script (returns blob URL or data URL)
   if (message.type === 'FETCH_IMAGE') {
     const url = message.url || message.payload?.url;
+    const credentials = message.credentials || message.payload?.credentials;
     console.log('[Background] FETCH_IMAGE url:', url);
-    handleImageFetch(url)
+    handleImageFetch(url, credentials)
       .then((result) => {
         console.log('[Background] FETCH_IMAGE result:', result.ok, result.dataUrl?.substring(0, 50));
         sendResponse(result);
@@ -455,9 +474,7 @@ function buildImageFetchHeaders(url: string): Record<string, string> {
   if (sourceConfig) {
     headers['Referer'] = sourceConfig.referer;
     headers['Origin'] = sourceConfig.referer.replace(/\/$/, '');
-    headers['User-Agent'] =
-      'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 ' +
-      '(KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
+    // No User-Agent override: the browser's real UA is the consistent one
   }
 
   return headers;
@@ -467,7 +484,7 @@ function buildImageFetchHeaders(url: string): Record<string, string> {
  * Handle image fetch request - proxies image through background script
  * Returns base64 data URL to bypass CORS/Referer issues
  */
-async function handleImageFetch(url: string): Promise<{
+async function handleImageFetch(url: string, credentials?: RequestCredentials): Promise<{
   ok: boolean;
   dataUrl?: string;
   error?: string;
@@ -475,7 +492,7 @@ async function handleImageFetch(url: string): Promise<{
   try {
     const response = await fetch(url, {
       headers: buildImageFetchHeaders(url),
-      credentials: 'omit',
+      credentials: credentials ?? 'omit',
       ...(httpCacheBypass ? { cache: 'reload' as RequestCache } : {}),
     });
 
@@ -540,19 +557,22 @@ async function handleFetch(
       }
     }
 
-    // Add required headers for known source domains
+    // Add required headers for known source domains.
+    // No User-Agent override: the browser's real UA matches its TLS and
+    // client-hint fingerprint; a stale hardcoded one is a bot-detection tell.
     const sourceConfig = getConfigForUrl(url);
     if (sourceConfig) {
       headers['Referer'] = sourceConfig.referer;
       headers['Origin'] = sourceConfig.referer.replace(/\/$/, '');
       headers['Accept'] = headers['Accept'] || 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8';
-      headers['User-Agent'] = headers['User-Agent'] || 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
     }
 
     const response = await fetch(url, {
       ...options,
       headers,
-      credentials: 'omit', // Don't send cookies
+      // Callers opt in to sending the user's cookies (bot-walled sources
+      // reuse a clearance cookie earned in a normal tab); default stays omit
+      credentials: (options.credentials as RequestCredentials) ?? 'omit',
       ...(httpCacheBypass ? { cache: 'reload' as RequestCache } : {}),
     });
 
@@ -747,6 +767,17 @@ async function fetchAndCacheImage(
 }> {
   const MAX_RETRIES = 2;
 
+  // A URL that just failed deterministically fails again; don't re-run the
+  // whole fetch for it on every cover render. (The caller consults the image
+  // cache first, so a cached success always wins over a stale entry here.)
+  const negative = imageNegativeCache.get(url);
+  if (negative) {
+    if (negative.until > Date.now()) {
+      return { ok: false, fromCache: false, error: negative.error };
+    }
+    imageNegativeCache.delete(url);
+  }
+
   // User-source images may live on CDN domains discovered only at runtime
   // (or served from cached page URLs whose source never ran this session):
   // make sure the source's Referer rule covers this host before fetching
@@ -780,6 +811,8 @@ async function fetchAndCacheImage(
 
       if (!response.ok) {
         console.warn(`[ImageFetch] FAIL ${response.status} for ${url.substring(0, 80)}...`);
+        // 4xx is deterministic; 5xx stays uncached so a hiccuping CDN recovers
+        if (response.status < 500) rememberImageFailure(url, `HTTP ${response.status}`);
         return { ok: false, fromCache: false, error: `HTTP ${response.status}` };
       }
 
@@ -821,16 +854,13 @@ async function fetchAndCacheImage(
       reader.readAsDataURL(blob);
     });
     } catch (error) {
-      if (attempt < MAX_RETRIES) {
-        console.warn(`[ImageFetch] Error, retrying: ${(error as Error).message}`);
-        await new Promise(r => setTimeout(r, 2000 * Math.pow(2, attempt)));
-        continue;
-      }
-      return {
-        ok: false,
-        fromCache: false,
-        error: (error as Error).message,
-      };
+      // A thrown fetch here is CORS/DNS, which is deterministic: retrying
+      // with backoff just held the caller (and the dashboard's cover fetch
+      // slot) for ~6s per doomed URL. Fail fast and remember.
+      const message = (error as Error).message;
+      console.warn(`[ImageFetch] Failed (no retry): ${message} for ${url.substring(0, 80)}`);
+      rememberImageFailure(url, message);
+      return { ok: false, fromCache: false, error: message };
     }
   }
   // Should not reach here, but just in case

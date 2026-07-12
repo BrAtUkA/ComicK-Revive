@@ -15,8 +15,8 @@ export function openReader(pageData: ComickPageData): void {
   void viewer.open(pageData);
 }
 
-/** Open a search result: ensure its mapping exists, then read. */
-export async function openSearchResult(result: SearchResult, sourceId: string): Promise<void> {
+/** Ensure a search result's source mapping exists; returns its library slug. */
+export async function ensureSearchMapping(result: SearchResult, sourceId: string): Promise<string> {
   const slug = standaloneSlug(sourceId, result.slug);
 
   const existing = await sourceMappingManager.get(slug);
@@ -37,6 +37,21 @@ export async function openSearchResult(result: SearchResult, sourceId: string): 
       alternateTitles: [result.title],
     });
   }
+  return slug;
+}
 
-  openReader({ slug, title: result.title, pageType: 'manga' });
+/** Open a search result: ensure its mapping exists, then read. */
+export async function openSearchResult(
+  result: SearchResult,
+  sourceId: string,
+  opts: { chapter?: number; forceResume?: boolean } = {}
+): Promise<void> {
+  const slug = await ensureSearchMapping(result, sourceId);
+  openReader({
+    slug,
+    title: result.title,
+    pageType: 'manga',
+    ...(opts.chapter !== undefined ? { overrideChapter: opts.chapter } : {}),
+    ...(opts.forceResume ? { forceResume: true } : {}),
+  });
 }

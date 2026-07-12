@@ -1,65 +1,153 @@
 {
-  "spec": 1,
-  "id": "weebcentral",
-  "name": "WeebCentral",
   "baseUrl": "https://weebcentral.com",
-  "lang": "en",
-  "referer": "https://weebcentral.com/",
-  "imageHosts": ["https://*/*"],
-  "requestDelayMs": 2000,
-  "search": {
-    "url": "{base}/search/data?text={query}&limit=32&offset={offset}&sort=Best+Match&order=Descending&display_mode=Full+Display",
-    "pageSize": 32,
-    "queryReplace": ["[!#:(),\\-]", " "],
+  "chapters": {
+    "chapterSlugRegex": "/chapters/([^/?#]+)",
+    "dateFormat": "iso",
     "list": {
-      "rows": "article > section > a",
       "fields": {
-        "title": { "sel": "div:not([class])" },
-        "url": { "attr": "href" },
-        "thumbnail": { "sel": "img", "attr": "src" }
-      }
+        "date": {
+          "attr": "datetime",
+          "sel": "time[datetime]"
+        },
+        "title": {
+          "sel": "span.flex > span"
+        },
+        "url": {
+          "attr": "href"
+        }
+      },
+      "rows": "div[x-data] > a"
     },
-    "slugRegex": "/series/([^/]+)"
+    "url": "{base}/series/{slug}/full-chapter-list"
   },
   "details": {
-    "url": "{base}/series/{slug}",
     "fields": {
-      "title": { "sel": "section[x-data] > section", "index": 1, "then": { "sel": "h1" } },
-      "description": { "sel": "section[x-data] > section", "index": 1, "then": { "sel": "li", "containsText": "Description", "then": { "sel": "p" } } },
-      "author": { "sel": "section[x-data] > section", "index": 0, "then": { "sel": "ul > li", "containsText": "Author", "then": { "sel": "span > a" } } },
-      "status": {
-        "sel": "section[x-data] > section", "index": 0,
-        "then": { "sel": "ul > li", "containsText": "Status", "then": { "sel": "a" } },
-        "map": { "Ongoing": "Ongoing", "Complete": "Completed", "Hiatus": "Hiatus", "Canceled": "Cancelled" }
+      "author": {
+        "index": 0,
+        "sel": "section[x-data] > section",
+        "then": {
+          "containsText": "Author",
+          "sel": "ul > li",
+          "then": {
+            "sel": "span > a"
+          }
+        }
       },
-      "genres": { "sel": "section[x-data] > section", "index": 0, "then": { "sel": "ul > li", "containsText": "Tag", "then": { "sel": "a" } } },
+      "description": {
+        "index": 1,
+        "sel": "section[x-data] > section",
+        "then": {
+          "containsText": "Description",
+          "sel": "li",
+          "then": {
+            "sel": "p"
+          }
+        }
+      },
+      "genres": {
+        "index": 0,
+        "sel": "section[x-data] > section",
+        "then": {
+          "containsText": "Tag",
+          "sel": "ul > li",
+          "then": {
+            "sel": "a"
+          }
+        }
+      },
+      "status": {
+        "index": 0,
+        "map": {
+          "Canceled": "Cancelled",
+          "Complete": "Completed",
+          "Hiatus": "Hiatus",
+          "Ongoing": "Ongoing"
+        },
+        "sel": "section[x-data] > section",
+        "then": {
+          "containsText": "Status",
+          "sel": "ul > li",
+          "then": {
+            "sel": "a"
+          }
+        }
+      },
       "thumbnail": {
-        "sel": "section[x-data] > section", "index": 0,
-        "then": { "sel": "source", "attr": "srcset", "regex": "^\\S+", "replace": [["small", "normal"]] },
-        "fallback": { "sel": "section[x-data] > section", "index": 0, "then": { "sel": "img", "attr": "src" } }
-      }
-    }
-  },
-  "chapters": {
-    "url": "{base}/series/{slug}/full-chapter-list",
-    "list": {
-      "rows": "div[x-data] > a",
-      "fields": {
-        "url": { "attr": "href" },
-        "title": { "sel": "span.flex > span" },
-        "date": { "sel": "time[datetime]", "attr": "datetime" }
+        "fallback": {
+          "index": 0,
+          "sel": "section[x-data] > section",
+          "then": {
+            "attr": "src",
+            "sel": "img"
+          }
+        },
+        "index": 0,
+        "sel": "section[x-data] > section",
+        "then": {
+          "attr": "srcset",
+          "regex": "^\\S+",
+          "replace": [
+            [
+              "small",
+              "normal"
+            ]
+          ],
+          "sel": "source"
+        }
+      },
+      "title": {
+        "index": 1,
+        "sel": "section[x-data] > section",
+        "then": {
+          "sel": "h1"
+        }
       }
     },
-    "chapterSlugRegex": "/chapters/([^/?#]+)",
-    "dateFormat": "iso"
+    "url": "{base}/series/{slug}"
   },
+  "iconUrl": "https://weebcentral.com/static/images/brand.png",
+  "id": "weebcentral",
+  "imageHosts": [
+    "https://*/*"
+  ],
+  "lang": "en",
+  "name": "WeebCentral",
   "pages": {
-    "url": "{base}/chapters/{chapterSlug}/images?is_prev=False&reading_style=long_strip",
     "list": {
-      "rows": "section[x-data*=scroll] > img",
       "fields": {
-        "url": { "attr": "src" }
-      }
-    }
-  }
+        "url": {
+          "attr": "src"
+        }
+      },
+      "rows": "section[x-data*=scroll] > img"
+    },
+    "url": "{base}/chapters/{chapterSlug}/images?is_prev=False&reading_style=long_strip"
+  },
+  "referer": "https://weebcentral.com/",
+  "requestDelayMs": 2000,
+  "search": {
+    "list": {
+      "fields": {
+        "thumbnail": {
+          "attr": "src",
+          "sel": "img"
+        },
+        "title": {
+          "sel": "div:not([class])"
+        },
+        "url": {
+          "attr": "href"
+        }
+      },
+      "rows": "article > section > a"
+    },
+    "pageSize": 32,
+    "queryReplace": [
+      "[!#:(),\\-]",
+      " "
+    ],
+    "slugRegex": "/series/([^/]+)",
+    "url": "{base}/search/data?text={query}&limit=32&offset={offset}&sort=Best+Match&order=Descending&display_mode=Full+Display"
+  },
+  "spec": 1
 }

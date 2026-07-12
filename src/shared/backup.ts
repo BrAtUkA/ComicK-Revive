@@ -49,7 +49,7 @@ export interface MergeResult {
 }
 
 const K = STORAGE_KEYS;
-const EXACT_KEYS: string[] = [K.GLOBAL_SETTINGS, K.STATS_TOTALS, K.SOURCE_CONFIG];
+const EXACT_KEYS: string[] = [K.GLOBAL_SETTINGS, K.STATS_TOTALS, K.SOURCE_CONFIG, K.SOURCE_CATALOG, K.LIBRARY_META, K.READING_HISTORY];
 const PREFIXES: string[] = [
   K.READING_STATE_PREFIX,
   K.SOURCE_MAPPING_PREFIX,
@@ -57,7 +57,7 @@ const PREFIXES: string[] = [
   K.USER_SOURCE_PREFIX,
 ];
 
-type Category = 'reading' | 'mapping' | 'statsDaily' | 'statsTotals' | 'settings' | 'sourceConfig' | 'userSource' | null;
+type Category = 'reading' | 'mapping' | 'statsDaily' | 'statsTotals' | 'settings' | 'sourceConfig' | 'sourceCatalog' | 'userSource' | 'libraryMeta' | 'history' | null;
 
 export function isBackupKey(key: string): boolean {
   return EXACT_KEYS.includes(key) || PREFIXES.some((p) => key.startsWith(p));
@@ -66,7 +66,10 @@ export function isBackupKey(key: string): boolean {
 function categorize(key: string): Category {
   if (key === K.GLOBAL_SETTINGS) return 'settings';
   if (key === K.SOURCE_CONFIG) return 'sourceConfig';
+  if (key === K.SOURCE_CATALOG) return 'sourceCatalog';
   if (key === K.STATS_TOTALS) return 'statsTotals';
+  if (key === K.LIBRARY_META) return 'libraryMeta';
+  if (key === K.READING_HISTORY) return 'history';
   if (key.startsWith(K.READING_STATE_PREFIX)) return 'reading';
   if (key.startsWith(K.SOURCE_MAPPING_PREFIX)) return 'mapping';
   if (key.startsWith(K.STATS_DAILY_PREFIX)) return 'statsDaily';
@@ -203,9 +206,67 @@ export function mergeData(
       case 'userSource':
         if (cur === undefined) { writes[key] = incVal; changes.userSources++; }
         break; // keep locally edited source if the id already exists
+      case 'sourceCatalog': {
+        // Union of enabled ids; learned facts merge per source (local wins,
+        // imageHosts unioned). NOTE: restoring on a fresh install does not
+        // re-grant host permissions; such sources register but their requests
+        // fail until the user re-enables them from the catalog (re-prompt).
+        type Learned = { mangaPath?: string; imageHosts?: string[]; loadMore?: boolean };
+        type CatalogVal = { v: 1; enabled: string[]; learned?: Record<string, Learned> };
+        const c = (cur ?? { v: 1, enabled: [] }) as CatalogVal;
+        const i = (incVal ?? { v: 1, enabled: [] }) as CatalogVal;
+        const learned: Record<string, Learned> = { ...(i.learned ?? {}) };
+        for (const [id, loc] of Object.entries(c.learned ?? {})) {
+          const inc = learned[id];
+          learned[id] = { ...inc, ...loc };
+          const hosts = [...new Set([...(inc?.imageHosts ?? []), ...(loc.imageHosts ?? [])])];
+          if (hosts.length) learned[id].imageHosts = hosts;
+        }
+        writes[key] = {
+          v: 1,
+          enabled: [...new Set([...(c.enabled ?? []), ...(i.enabled ?? [])])],
+          ...(Object.keys(learned).length ? { learned } : {}),
+        };
+        break;
+      }
+      case 'libraryMeta':
+        writes[key] = cur ? mergeLibraryMeta(cur as LibraryMetaMap, incVal as LibraryMetaMap) : incVal;
+        break;
+      case 'history':
+        writes[key] = cur ? mergeHistory(cur as HistoryStore, incVal as HistoryStore) : incVal;
+        break;
     }
   }
   return { writes, removes, changes };
+}
+
+// Shapes mirrored from core/Library.ts and core/History.ts (kept loose here;
+// backup merging must tolerate fields from other versions)
+type LibraryMetaMap = Record<string, Record<string, unknown>>;
+interface HistoryStore { v: 1; seededFromStats: boolean; entries: Array<{ slug: string; chapter: number; at: number; seeded?: boolean }> }
+
+/** Per-slug fill-missing; existing slugs keep local values (manual statuses win). */
+function mergeLibraryMeta(cur: LibraryMetaMap, inc: LibraryMetaMap): LibraryMetaMap {
+  const out: LibraryMetaMap = { ...cur };
+  for (const [slug, meta] of Object.entries(inc ?? {})) {
+    out[slug] = slug in out ? { ...meta, ...out[slug] } : meta;
+  }
+  return out;
+}
+
+/** Union of entries deduped by slug+chapter+timestamp, time-ordered, capped. */
+function mergeHistory(cur: HistoryStore, inc: HistoryStore): HistoryStore {
+  const seen = new Set<string>();
+  const merged = [...(cur.entries ?? []), ...(inc?.entries ?? [])]
+    .filter((e) => {
+      const id = `${e.slug}|${e.chapter}|${e.at}`;
+      if (seen.has(id)) return false;
+      seen.add(id);
+      return true;
+    })
+    .sort((a, b) => a.at - b.at)
+    .slice(-1500);
+  return { v: 1, seededFromStats: !!(cur.seededFromStats || inc?.seededFromStats), entries: merged };
 }
 
 function mergeReadingState(cur: MangaReadingState, inc: MangaReadingState): MangaReadingState {
