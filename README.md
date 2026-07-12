@@ -36,9 +36,14 @@
 
 ## 📰 News
 
-- **[v0.3.0](../../releases/tag/v0.3.0)** · *2026-07-12* · **The sources update.** A built-in catalog of **70+ sources** you can switch on in one click, each with its real logo, each asking for access to its own site only. An **18+ toggle** reveals the adult catalog when you want it. **Test all** checks every source from your own connection and gives you a copyable report. Plus a proper **Library** with per-manga detail pages, a **History** tab, richer **Stats**, and a much smoother multi-source search.
-- **[v0.2.0](../../releases/tag/v0.2.0)** · *2026-07-04* · **From reader to app.** A full dashboard (library, cross-source search you can read from, stats, settings), a toolbar popup, add-your-own JSON sources with an AI prompt and a live test tool, drag-to-prioritize sources, one-file backup **export/import**, and automatic update checks.
-- **[v0.1.0](../../releases/tag/v0.1.0)** · *2026-06-26* · **First public beta.** The in-page reader for comick.dev: AsuraScans, MangaDex, and MangaKatana, offline caching, three reading modes, and exact-position resume.
+- **[v0.3.0](../../releases/tag/v0.3.0)** · *2026-07-12* · **The sources update**<br/>
+  A catalog of **70+ sources** you can switch on in one click, an **18+ toggle**, and a one-button **Test all** with a shareable report. Plus a full **Library** with detail pages, a **History** tab, and a much smoother search.
+
+- **[v0.2.0](../../releases/tag/v0.2.0)** · *2026-07-04* · **From reader to app**<br/>
+  The **dashboard** and toolbar popup arrive: library, read-from-search, stats, add-your-own JSON sources with AI help, backup **export/import**, and update checks.
+
+- **[v0.1.0](../../releases/tag/v0.1.0)** · *2026-06-26* · **First public beta**<br/>
+  The in-page reader for comick.dev: three sources, offline caching, three reading modes, and exact-position resume.
 
 <sub>Full notes for every version live on the [**Releases**](../../releases) page.</sub>
 
