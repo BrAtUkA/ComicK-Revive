@@ -16,9 +16,13 @@
 </p>
 
 <p align="center">
-  <a href="#-installation"><img alt="Install" src="https://img.shields.io/badge/Install-Get_the_latest_release-6366f1?style=for-the-badge&logo=googlechrome&logoColor=white"></a>
-  &nbsp;
-  <a href="#-adding-a-new-source"><img alt="Add a source" src="https://img.shields.io/badge/Add_a_source-Catalog_%26_guide-22c55e?style=for-the-badge&logo=json&logoColor=white"></a>
+  <a href="#-installation" title="Install ComicK Revive: takes about a minute">
+    <img alt="Install now" src="https://img.shields.io/badge/INSTALL_NOW-latest_release_%C2%B7_1_minute-6366f1?style=for-the-badge&labelColor=4338ca&logo=googlechrome&logoColor=white">
+  </a>
+  &nbsp;&nbsp;
+  <a href="#-adding-a-new-source" title="Switch on more sources: 70+ ship built in">
+    <img alt="Add sources" src="https://img.shields.io/badge/ADD_SOURCES-70%2B_built--in_catalog-22c55e?style=for-the-badge&labelColor=15803d&logo=bookstack&logoColor=white">
+  </a>
 </p>
 
 <p align="center">
